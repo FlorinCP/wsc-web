@@ -8,7 +8,6 @@ import {
 } from "@/engine/sudoku-engine";
 
 export function useSudokuEngine(wasmPath: string) {
-  // Create an instance of the engine
   const [engine, setEngine] = useState<SudokuEngine | null>(null);
   const [status, setStatus] = useState<string>(
     "Initializing WebAssembly module...",
@@ -17,7 +16,6 @@ export function useSudokuEngine(wasmPath: string) {
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState<SudokuProgress | null>(null);
 
-  // Initialize the engine on mount
   useEffect(() => {
     const sudokuEngine = new SudokuEngine(wasmPath);
 
@@ -45,7 +43,6 @@ export function useSudokuEngine(wasmPath: string) {
     };
   }, [wasmPath]);
 
-  // Load puzzles from file content
   const loadPuzzles = useCallback(
     (content: string): number => {
       if (!engine) return 0;

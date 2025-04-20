@@ -13,51 +13,29 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, FileText, Wand2, AlertTriangle } from "lucide-react";
+import { FileText, AlertTriangle } from "lucide-react";
 import { useSudokuEngine } from "@/components/deepseek/use-sudoku-engine";
 
-interface SudokuSolverPanelProps {
-  currentBoard: string;
-  onSolutionFound: (solution: string) => void;
-}
-
-export function SudokuSolverPanel({
-  currentBoard,
-  onSolutionFound,
-}: SudokuSolverPanelProps) {
-  const { solvePuzzle, isLoaded, error, isRunning } =
+export function BatchSolver() {
+  const { startBulkSolve, loadPuzzlesFromFile, isLoaded, error, isRunning } =
     useSudokuEngine("/wasm/sudoku_pt.js");
-  const [fileContent, setFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const solveCurrentBoard = () => {
-    const solution = solvePuzzle(currentBoard);
-    if (solution.solution) {
-      onSolutionFound(solution.solution);
+  const handleStartBulkSolve = async () => {
+    if (fileInputRef.current?.files?.length) {
+      const file = fileInputRef.current.files[0];
+      await loadPuzzlesFromFile(file);
+    } else {
+      await startBulkSolve();
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setFileContent(content);
-    };
-    reader.readAsText(file);
-  };
-
-  const solveFromFile = () => {
-    if (!fileContent) {
-      return;
-    }
-
-    const solution = solvePuzzle(fileContent);
-    if (solution.solution) {
-      onSolutionFound(solution.solution);
-    }
+    await loadPuzzlesFromFile(file);
   };
 
   return (
@@ -80,24 +58,6 @@ export function SudokuSolverPanel({
         )}
 
         <div className="flex flex-col gap-2">
-          <Button
-            onClick={solveCurrentBoard}
-            disabled={!isLoaded}
-            className="w-full"
-          >
-            {isRunning() ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Solving...
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4" />
-                Solve Current Puzzle
-              </>
-            )}
-          </Button>
-
           <div className="flex items-center gap-2">
             <Input
               ref={fileInputRef}
@@ -115,8 +75,8 @@ export function SudokuSolverPanel({
               Upload Puzzle File
             </Button>
             <Button
-              onClick={solveFromFile}
-              disabled={!fileContent || !isLoaded}
+              onClick={handleStartBulkSolve}
+              disabled={!isLoaded}
               className="flex-1"
             >
               Load & Solve
@@ -128,12 +88,6 @@ export function SudokuSolverPanel({
           <Alert variant="destructive">
             <AlertDescription>{error.name}</AlertDescription>
           </Alert>
-        )}
-
-        {fileContent && (
-          <div className="text-sm text-muted-foreground">
-            File loaded: {fileContent.length} characters
-          </div>
         )}
       </CardContent>
     </Card>
