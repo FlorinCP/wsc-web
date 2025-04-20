@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Clock } from "lucide-react"
 import { SudokuCellPopover } from "@/components/sudoku-cell-popover"
+import { SudokuHelpButton } from "@/components/sudoku-help-button"
+import { useDriverTour } from "@/hooks/use-driver-tour"
 
 // Difficulty levels
 const DIFFICULTIES = {
@@ -162,6 +164,7 @@ export function Sudoku() {
   const [history, setHistory] = useState<CellType[][][]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [showCompletionDialog, setShowCompletionDialog] = useState(false)
+  const { startTour, isFirstVisit } = useDriverTour()
 
   // Update cell highlighting
   const updateHighlighting = useCallback(
@@ -362,6 +365,18 @@ export function Sudoku() {
     initializeBoard()
   }, [initializeBoard])
 
+  // Start tour automatically on first visit
+  useEffect(() => {
+    if (isFirstVisit && board.length > 0) {
+      // Small delay to ensure the board is fully rendered
+      const timer = setTimeout(() => {
+        startTour()
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isFirstVisit, board, startTour])
+
   // Timer
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -478,23 +493,29 @@ export function Sudoku() {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" id="timer-display">
           <Clock className="w-5 h-5" />
           <span className="text-lg font-mono">{formatTime(timer)}</span>
         </div>
 
-        <Tabs defaultValue="easy" onValueChange={(value) => setDifficulty(value as keyof typeof DIFFICULTIES)}>
+        <Tabs
+          defaultValue="easy"
+          onValueChange={(value) => setDifficulty(value as keyof typeof DIFFICULTIES)}
+          id="difficulty-tabs"
+        >
           <TabsList>
             <TabsTrigger value="easy">Easy</TabsTrigger>
             <TabsTrigger value="medium">Medium</TabsTrigger>
             <TabsTrigger value="hard">Hard</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        <SudokuHelpButton onStartTour={startTour} />
       </div>
 
       <Card className="w-full">
         <CardContent className="p-4">
-          <div className="grid grid-cols-9 gap-0.5 md:gap-1 aspect-square">
+          <div className="grid grid-cols-9 gap-0.5 md:gap-1 aspect-square" id="sudoku-board">
             {board.map((row, rowIndex) =>
               row.map((cell, colIndex) => (
                 <SudokuCellPopover
@@ -514,18 +535,22 @@ export function Sudoku() {
         </CardContent>
       </Card>
 
-      <SudokuKeypad onNumberClick={handleNumberInput} notesMode={isNotesMode} />
+      <div id="number-keypad">
+        <SudokuKeypad onNumberClick={handleNumberInput} notesMode={isNotesMode} />
+      </div>
 
-      <SudokuControls
-        onNewGame={initializeBoard}
-        onUndo={handleUndo}
-        onHint={handleHint}
-        onCheck={handleCheck}
-        onToggleNotes={() => setIsNotesMode(!isNotesMode)}
-        onClearCell={handleClearCell}
-        isNotesMode={isNotesMode}
-        canUndo={historyIndex >= 0}
-      />
+      <div id="game-controls">
+        <SudokuControls
+          onNewGame={initializeBoard}
+          onUndo={handleUndo}
+          onHint={handleHint}
+          onCheck={handleCheck}
+          onToggleNotes={() => setIsNotesMode(!isNotesMode)}
+          onClearCell={handleClearCell}
+          isNotesMode={isNotesMode}
+          canUndo={historyIndex >= 0}
+        />
+      </div>
 
       <AlertDialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
         <AlertDialogContent>

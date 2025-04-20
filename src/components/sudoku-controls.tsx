@@ -42,7 +42,13 @@ export function SudokuControls({
         <Check className="h-4 w-4" />
       </Button>
 
-      <Button variant={isNotesMode ? "secondary" : "outline"} size="icon" onClick={onToggleNotes} title="Notes Mode">
+      <Button
+        variant={isNotesMode ? "secondary" : "outline"}
+        size="icon"
+        onClick={onToggleNotes}
+        title="Notes Mode"
+        id="notes-toggle"
+      >
         <Pencil className="h-4 w-4" />
       </Button>
 
