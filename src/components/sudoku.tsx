@@ -14,7 +14,7 @@ import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
 
 export function Sudoku() {
   const [activeTab, setActiveTab] = useState<string>("play");
-  const { startTour, isFirstVisit } = useDriverTour();
+  const { startTour } = useDriverTour();
 
   const {
     board,
@@ -24,7 +24,6 @@ export function Sudoku() {
     difficulty,
     showCompletionDialog,
     historyIndex,
-
     handleCellSelect,
     handleNumberInput,
     handleClearCell,
