@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SudokuCell } from "@/components/sudoku-cell"
 import { SudokuControls } from "@/components/sudoku-controls"
 import { SudokuKeypad } from "@/components/sudoku-keypad"
 import {
@@ -16,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Clock } from "lucide-react"
+import { SudokuCellPopover } from "@/components/sudoku-cell-popover"
 
 // Difficulty levels
 const DIFFICULTIES = {
@@ -163,6 +163,168 @@ export function Sudoku() {
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [showCompletionDialog, setShowCompletionDialog] = useState(false)
 
+  // Update cell highlighting
+  const updateHighlighting = useCallback(
+    (row: number, col: number) => {
+      const newBoard = [...board]
+
+      // Reset all highlights
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          newBoard[r][c] = {
+            ...newBoard[r][c],
+            isHighlighted: false,
+            isRelated: false,
+          }
+        }
+      }
+
+      // Highlight selected cell
+      if (row >= 0 && col >= 0) {
+        newBoard[row][col].isHighlighted = true
+
+        // Highlight related cells (same row, column, and box)
+        for (let i = 0; i < 9; i++) {
+          // Same row
+          newBoard[row][i].isRelated = true
+          // Same column
+          newBoard[i][col].isRelated = true
+        }
+
+        // Same box
+        const boxRow = Math.floor(row / 3) * 3
+        const boxCol = Math.floor(col / 3) * 3
+        for (let r = boxRow; r < boxRow + 3; r++) {
+          for (let c = boxCol; c < boxCol + 3; c++) {
+            newBoard[r][c].isRelated = true
+          }
+        }
+
+        // Highlight cells with the same value
+        const value = newBoard[row][col].value
+        if (value !== 0) {
+          for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+              if (newBoard[r][c].value === value) {
+                newBoard[r][c].isRelated = true
+              }
+            }
+          }
+        }
+      }
+
+      setBoard(newBoard)
+    },
+    [board, setBoard],
+  )
+
+  // Handle cell selection
+  const handleCellSelect = useCallback(
+    (row: number, col: number) => {
+      if (board[row][col].isOriginal) {
+        // Can still select original cells to highlight related cells
+        setSelectedCell({ row, col })
+      } else {
+        setSelectedCell({ row, col })
+      }
+
+      // Update highlighting
+      updateHighlighting(row, col)
+    },
+    [board, updateHighlighting],
+  )
+
+  // Handle number input
+  const handleNumberInput = (number: number) => {
+    if (!selectedCell) return
+
+    const { row, col } = selectedCell
+    if (board[row][col].isOriginal) return
+
+    // Save current state to history
+    const newHistory = history.slice(0, historyIndex + 1)
+    newHistory.push(JSON.parse(JSON.stringify(board)))
+    setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
+
+    const newBoard = [...board]
+
+    if (number === 0) {
+      // Clear the cell
+      newBoard[row][col] = {
+        ...newBoard[row][col],
+        value: 0,
+        notes: [],
+        isInvalid: false,
+      }
+    } else if (isNotesMode) {
+      // Toggle note
+      const notes = [...newBoard[row][col].notes]
+      const index = notes.indexOf(number)
+
+      if (index === -1) {
+        notes.push(number)
+      } else {
+        notes.splice(index, 1)
+      }
+
+      newBoard[row][col] = {
+        ...newBoard[row][col],
+        notes,
+        value: 0, // Clear value when adding notes
+        isInvalid: false,
+      }
+    } else {
+      // Set value
+      const isValid = isValidMove(
+        board.map((row) => row.map((cell) => cell.value)),
+        row,
+        col,
+        number,
+      )
+
+      newBoard[row][col] = {
+        ...newBoard[row][col],
+        value: number,
+        notes: [], // Clear notes when setting value
+        isInvalid: !isValid,
+      }
+    }
+
+    setBoard(newBoard)
+
+    // Check if the board is complete
+    const values = newBoard.map((row) => row.map((cell) => cell.value))
+    if (isBoardComplete(values) && isValidBoard(values)) {
+      setIsRunning(false)
+      setShowCompletionDialog(true)
+    }
+  }
+
+  // Handle clear cell
+  const handleClearCell = useCallback(() => {
+    if (!selectedCell) return
+
+    const { row, col } = selectedCell
+    if (board[row][col].isOriginal) return
+
+    // Save current state to history
+    const newHistory = history.slice(0, historyIndex + 1)
+    newHistory.push(JSON.parse(JSON.stringify(board)))
+    setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
+
+    const newBoard = [...board]
+    newBoard[row][col] = {
+      ...newBoard[row][col],
+      value: 0,
+      notes: [],
+      isInvalid: false,
+    }
+
+    setBoard(newBoard)
+  }, [selectedCell, board, history, historyIndex, setBoard])
+
   // Initialize the board
   const initializeBoard = useCallback(() => {
     const newSolvedBoard = generateSolvedBoard()
@@ -213,135 +375,49 @@ export function Sudoku() {
     return () => clearInterval(interval)
   }, [isRunning])
 
+  // Add a new useEffect for keyboard navigation after the timer useEffect
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedCell) return
+
+      const { row, col } = selectedCell
+
+      // Arrow key navigation
+      if (e.key === "ArrowUp" && row > 0) {
+        handleCellSelect(row - 1, col)
+      } else if (e.key === "ArrowDown" && row < 8) {
+        handleCellSelect(row + 1, col)
+      } else if (e.key === "ArrowLeft" && col > 0) {
+        handleCellSelect(row, col - 1)
+      } else if (e.key === "ArrowRight" && col < 8) {
+        handleCellSelect(row, col + 1)
+      }
+
+      // Number input (1-9)
+      if (/^[1-9]$/.test(e.key)) {
+        handleNumberInput(Number.parseInt(e.key))
+      }
+
+      // Delete or Backspace to clear cell
+      if (e.key === "Delete" || e.key === "Backspace") {
+        handleClearCell()
+      }
+
+      // 'n' key to toggle notes mode
+      if (e.key === "n") {
+        setIsNotesMode(!isNotesMode)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedCell, isNotesMode, handleCellSelect, handleClearCell, setIsNotesMode])
+
   // Format timer
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-  }
-
-  // Handle cell selection
-  const handleCellSelect = (row: number, col: number) => {
-    if (board[row][col].isOriginal) {
-      // Can still select original cells to highlight related cells
-      setSelectedCell({ row, col })
-    } else {
-      setSelectedCell({ row, col })
-    }
-
-    // Update highlighting
-    updateHighlighting(row, col)
-  }
-
-  // Update cell highlighting
-  const updateHighlighting = (row: number, col: number) => {
-    const newBoard = [...board]
-
-    // Reset all highlights
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        newBoard[r][c] = {
-          ...newBoard[r][c],
-          isHighlighted: false,
-          isRelated: false,
-        }
-      }
-    }
-
-    // Highlight selected cell
-    if (row >= 0 && col >= 0) {
-      newBoard[row][col].isHighlighted = true
-
-      // Highlight related cells (same row, column, and box)
-      for (let i = 0; i < 9; i++) {
-        // Same row
-        newBoard[row][i].isRelated = true
-        // Same column
-        newBoard[i][col].isRelated = true
-      }
-
-      // Same box
-      const boxRow = Math.floor(row / 3) * 3
-      const boxCol = Math.floor(col / 3) * 3
-      for (let r = boxRow; r < boxRow + 3; r++) {
-        for (let c = boxCol; c < boxCol + 3; c++) {
-          newBoard[r][c].isRelated = true
-        }
-      }
-
-      // Highlight cells with the same value
-      const value = newBoard[row][col].value
-      if (value !== 0) {
-        for (let r = 0; r < 9; r++) {
-          for (let c = 0; c < 9; c++) {
-            if (newBoard[r][c].value === value) {
-              newBoard[r][c].isRelated = true
-            }
-          }
-        }
-      }
-    }
-
-    setBoard(newBoard)
-  }
-
-  // Handle number input
-  const handleNumberInput = (number: number) => {
-    if (!selectedCell) return
-
-    const { row, col } = selectedCell
-    if (board[row][col].isOriginal) return
-
-    // Save current state to history
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(JSON.parse(JSON.stringify(board)))
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-
-    const newBoard = [...board]
-
-    if (isNotesMode) {
-      // Toggle note
-      const notes = [...newBoard[row][col].notes]
-      const index = notes.indexOf(number)
-
-      if (index === -1) {
-        notes.push(number)
-      } else {
-        notes.splice(index, 1)
-      }
-
-      newBoard[row][col] = {
-        ...newBoard[row][col],
-        notes,
-        value: 0, // Clear value when adding notes
-        isInvalid: false,
-      }
-    } else {
-      // Set value
-      const isValid = isValidMove(
-        board.map((row) => row.map((cell) => cell.value)),
-        row,
-        col,
-        number,
-      )
-
-      newBoard[row][col] = {
-        ...newBoard[row][col],
-        value: number,
-        notes: [], // Clear notes when setting value
-        isInvalid: !isValid,
-      }
-    }
-
-    setBoard(newBoard)
-
-    // Check if the board is complete
-    const values = newBoard.map((row) => row.map((cell) => cell.value))
-    if (isBoardComplete(values) && isValidBoard(values)) {
-      setIsRunning(false)
-      setShowCompletionDialog(true)
-    }
   }
 
   // Handle undo
@@ -399,30 +475,6 @@ export function Sudoku() {
     setBoard(newBoard)
   }
 
-  // Handle clear cell
-  const handleClearCell = () => {
-    if (!selectedCell) return
-
-    const { row, col } = selectedCell
-    if (board[row][col].isOriginal) return
-
-    // Save current state to history
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(JSON.parse(JSON.stringify(board)))
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-
-    const newBoard = [...board]
-    newBoard[row][col] = {
-      ...newBoard[row][col],
-      value: 0,
-      notes: [],
-      isInvalid: false,
-    }
-
-    setBoard(newBoard)
-  }
-
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       <div className="flex items-center justify-between w-full">
@@ -445,13 +497,16 @@ export function Sudoku() {
           <div className="grid grid-cols-9 gap-0.5 md:gap-1 aspect-square">
             {board.map((row, rowIndex) =>
               row.map((cell, colIndex) => (
-                <SudokuCell
+                <SudokuCellPopover
                   key={`${rowIndex}-${colIndex}`}
                   cell={cell}
                   row={rowIndex}
                   col={colIndex}
                   isSelected={selectedCell?.row === rowIndex && selectedCell?.col === colIndex}
                   onSelect={() => handleCellSelect(rowIndex, colIndex)}
+                  onNumberInput={handleNumberInput}
+                  isNotesMode={isNotesMode}
+                  onToggleNotes={() => setIsNotesMode(!isNotesMode)}
                 />
               )),
             )}
