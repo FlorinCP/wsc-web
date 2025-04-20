@@ -35,7 +35,6 @@ export function useSudokuGame() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
 
-  // Convert the current board to a string representation for the WASM solver
   const getCurrentBoardAsString = useCallback(() => {
     if (!board.length) return "";
 
@@ -48,12 +47,10 @@ export function useSudokuGame() {
     return result;
   }, [board]);
 
-  // Update cell highlighting
   const updateHighlighting = useCallback(
     (row: number, col: number) => {
       const newBoard = [...board];
 
-      // Reset all highlights
       for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
           newBoard[r][c] = {
@@ -64,19 +61,15 @@ export function useSudokuGame() {
         }
       }
 
-      // Highlight selected cell
       if (row >= 0 && col >= 0) {
         newBoard[row][col].isHighlighted = true;
 
         // Highlight related cells (same row, column, and box)
         for (let i = 0; i < 9; i++) {
-          // Same row
           newBoard[row][i].isRelated = true;
-          // Same column
           newBoard[i][col].isRelated = true;
         }
 
-        // Same box
         const boxRow = Math.floor(row / 3) * 3;
         const boxCol = Math.floor(col / 3) * 3;
         for (let r = boxRow; r < boxRow + 3; r++) {
@@ -85,7 +78,6 @@ export function useSudokuGame() {
           }
         }
 
-        // Highlight cells with the same value
         const value = newBoard[row][col].value;
         if (value !== 0) {
           for (let r = 0; r < 9; r++) {
@@ -103,7 +95,6 @@ export function useSudokuGame() {
     [board],
   );
 
-  // Handle cell selection
   const handleCellSelect = useCallback(
     (row: number, col: number) => {
       setSelectedCell({ row, col });
@@ -112,7 +103,6 @@ export function useSudokuGame() {
     [updateHighlighting],
   );
 
-  // Handle number input
   const handleNumberInput = useCallback(
     (number: number) => {
       if (!selectedCell) return;
@@ -172,7 +162,6 @@ export function useSudokuGame() {
 
       setBoard(newBoard);
 
-      // Check if the board is complete
       const values = newBoard.map((row) => row.map((cell) => cell.value));
       if (isBoardComplete(values) && isValidBoard(values)) {
         setIsRunning(false);
@@ -182,7 +171,6 @@ export function useSudokuGame() {
     [board, history, historyIndex, isNotesMode, selectedCell],
   );
 
-  // Handle clear cell
   const handleClearCell = useCallback(() => {
     if (!selectedCell) return;
 
@@ -206,7 +194,6 @@ export function useSudokuGame() {
     setBoard(newBoard);
   }, [selectedCell, board, history, historyIndex]);
 
-  // Initialize the board
   const initializeBoard = useCallback(() => {
     const newSolvedBoard = generateSolvedBoard();
     setSolvedBoard(newSolvedBoard);
@@ -238,7 +225,6 @@ export function useSudokuGame() {
     setShowCompletionDialog(false);
   }, [difficulty]);
 
-  // Handle solution found from the solver
   const handleSolutionFound = useCallback(
     (solution: number[][]) => {
       // Save current state to history
@@ -268,7 +254,6 @@ export function useSudokuGame() {
     [board, history, historyIndex],
   );
 
-  // Handle undo
   const handleUndo = useCallback(() => {
     if (historyIndex >= 0) {
       setBoard(JSON.parse(JSON.stringify(history[historyIndex])));
@@ -276,7 +261,6 @@ export function useSudokuGame() {
     }
   }, [history, historyIndex]);
 
-  // Handle hint
   const handleHint = useCallback(() => {
     if (!selectedCell) return;
 
@@ -299,7 +283,6 @@ export function useSudokuGame() {
 
     setBoard(newBoard);
 
-    // Check if the board is complete
     const values = newBoard.map((row) => row.map((cell) => cell.value));
     if (isBoardComplete(values)) {
       setIsRunning(false);
@@ -307,7 +290,6 @@ export function useSudokuGame() {
     }
   }, [board, history, historyIndex, selectedCell, solvedBoard]);
 
-  // Handle check
   const handleCheck = useCallback(() => {
     const newBoard = [...board];
 

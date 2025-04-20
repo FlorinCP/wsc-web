@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import type { CellType } from "./sudoku";
+import { CellType } from "@/types/sudoku";
 
 interface SudokuCellPopoverProps {
   cell: CellType;
@@ -57,15 +57,16 @@ export function SudokuCellPopover({
           className={cn(
             "relative flex items-center justify-center aspect-square border border-border text-lg md:text-xl font-medium transition-all cursor-pointer select-none",
             isEvenBox ? "bg-background" : "bg-muted/30",
-            isSelected && "bg-primary/20 border-primary",
-            cell.isHighlighted && "bg-primary/20 border-primary",
-            cell.isRelated && !cell.isHighlighted && "bg-muted/50",
+            cell.isHighlighted &&
+              "bg-blue-50 border-none rounded-[2px] ring-2 ring-blue-500",
+            cell.isRelated && !cell.isHighlighted && "bg-blue-50",
             cell.isInvalid && "bg-destructive/20 border-destructive",
+            cell.isOriginal && !cell.isRelated && "bg-muted/70",
             // Add thicker borders for box boundaries
-            row % 3 === 0 && "border-t-2",
-            col % 3 === 0 && "border-l-2",
-            row === 8 && "border-b-2",
-            col === 8 && "border-r-2",
+            row % 3 === 0 && !cell.isRelated && "border-t-2 ",
+            col % 3 === 0 && !cell.isRelated && "border-l-2",
+            row === 8 && !cell.isRelated && "border-b-2",
+            col === 8 && !cell.isRelated && "border-r-2",
           )}
           onClick={handleClick}
           tabIndex={0}
@@ -89,14 +90,14 @@ export function SudokuCellPopover({
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="center">
+      <PopoverContent className="w-auto p-4" align="center">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 justify-between mb-1">
             <span className="text-sm font-medium">Select a number</span>
             <Button
               variant={isNotesMode ? "secondary" : "outline"}
               size="icon"
-              className="h-6 w-6"
+              className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleNotes();
@@ -105,14 +106,14 @@ export function SudokuCellPopover({
               <Pencil className="h-3 w-3" />
             </Button>
           </div>
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-1.5 w-full">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => (
               <Button
                 key={number}
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "h-8 w-8 p-0",
+                  "h-full w-full aspect-square",
                   isNotesMode && "bg-secondary/50 text-secondary-foreground",
                 )}
                 onClick={() => handleNumberClick(number)}
