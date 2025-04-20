@@ -14,30 +14,29 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, FileText, Wand2, AlertTriangle } from "lucide-react";
-import { useWasmSolver } from "@/hooks/use-wasm-solver";
+import { useSudokuEngine } from "@/components/deepseek/use-sudoku-engine";
 
 interface SudokuSolverPanelProps {
   currentBoard: string;
-  onSolutionFound: (solution: number[][]) => void;
+  onSolutionFound: (solution: string) => void;
 }
 
 export function SudokuSolverPanel({
   currentBoard,
   onSolutionFound,
 }: SudokuSolverPanelProps) {
-  const { solvePuzzle, isLoading, error, isReady } = useWasmSolver();
+  const { solvePuzzle, isLoaded, error, isRunning } =
+    useSudokuEngine("/wasm/sudoku_pt.js");
   const [fileContent, setFileContent] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Solve the current board
-  const solveCurrentBoard = async () => {
-    const solution = await solvePuzzle(currentBoard);
-    if (solution) {
-      onSolutionFound(solution);
+  const solveCurrentBoard = () => {
+    const solution = solvePuzzle(currentBoard);
+    if (solution.solution) {
+      onSolutionFound(solution.solution);
     }
   };
 
-  // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -50,15 +49,14 @@ export function SudokuSolverPanel({
     reader.readAsText(file);
   };
 
-  // Solve from file
-  const solveFromFile = async () => {
+  const solveFromFile = () => {
     if (!fileContent) {
       return;
     }
 
-    const solution = await solvePuzzle(fileContent);
-    if (solution) {
-      onSolutionFound(solution);
+    const solution = solvePuzzle(fileContent);
+    if (solution.solution) {
+      onSolutionFound(solution.solution);
     }
   };
 
@@ -71,8 +69,8 @@ export function SudokuSolverPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!isReady && (
-          <Alert variant="warning">
+        {!isLoaded && (
+          <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               WebAssembly solver requires cross-origin isolation. Some features
@@ -84,10 +82,10 @@ export function SudokuSolverPanel({
         <div className="flex flex-col gap-2">
           <Button
             onClick={solveCurrentBoard}
-            disabled={isLoading || !isReady}
+            disabled={!isLoaded}
             className="w-full"
           >
-            {isLoading ? (
+            {isRunning() ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Solving...
@@ -118,7 +116,7 @@ export function SudokuSolverPanel({
             </Button>
             <Button
               onClick={solveFromFile}
-              disabled={!fileContent || isLoading || !isReady}
+              disabled={!fileContent || !isLoaded}
               className="flex-1"
             >
               Load & Solve
@@ -128,7 +126,7 @@ export function SudokuSolverPanel({
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{error.name}</AlertDescription>
           </Alert>
         )}
 

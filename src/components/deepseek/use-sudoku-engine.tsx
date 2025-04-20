@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { SudokuEngine, SudokuProgress, SolveResult } from "./SudokuEngine";
+import {
+  SudokuEngine,
+  SudokuProgress,
+  SolveResult,
+} from "@/engine/sudoku-engine";
 
 export function useSudokuEngine(wasmPath: string) {
   // Create an instance of the engine

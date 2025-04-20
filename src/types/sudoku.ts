@@ -7,4 +7,4 @@ export type CellType = {
   isInvalid: boolean;
 };
 
-export type SudokuBoard = CellType[][];
+export type SudokuBoardType = CellType[][];

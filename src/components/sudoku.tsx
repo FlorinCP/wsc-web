@@ -11,10 +11,23 @@ import { SudokuCompletionDialog } from "@/components/sudoku-completion-dialog";
 import { useSudokuGame } from "@/hooks/use-sudoku-game";
 import { useDriverTour } from "@/hooks/use-driver-tour";
 import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
+import { Button } from "@/components/ui/button";
+import { useSudokuEngine } from "@/components/deepseek/use-sudoku-engine";
+import { boardToString } from "@/utils/sudoku-utils";
 
 export function Sudoku() {
   const [activeTab, setActiveTab] = useState<string>("play");
   const { startTour } = useDriverTour();
+
+  const { solvePuzzle, isLoaded, error, isRunning } =
+    useSudokuEngine("/wasm/sudoku_pt.js");
+
+  const onSolution = () => {
+    const solution = solvePuzzle(boardToString(board));
+    if (solution.solution) {
+      handleSolutionFound(solution.solution);
+    }
+  };
 
   const {
     board,
@@ -39,7 +52,6 @@ export function Sudoku() {
     formatTime,
   } = useSudokuGame();
 
-  // Set up keyboard navigation
   useKeyboardNavigation({
     selectedCell,
     handleCellSelect,
@@ -75,7 +87,7 @@ export function Sudoku() {
             onToggleNotes={toggleNotesMode}
           />
 
-          <div id="number-keypad" className="mt-6">
+          <div id="number-keypad" className="mt-6 flex flex-col items-center">
             <SudokuKeypad
               onNumberClick={handleNumberInput}
               notesMode={isNotesMode}
@@ -93,6 +105,16 @@ export function Sudoku() {
               isNotesMode={isNotesMode}
               canUndo={historyIndex >= 0}
             />
+          </div>
+
+          <div className="mt-4 flex flex-col items-center">
+            <Button
+              id="solution"
+              onClick={onSolution}
+              disabled={!isLoaded || isRunning() || !!error}
+            >
+              Solve
+            </Button>
           </div>
         </TabsContent>
 

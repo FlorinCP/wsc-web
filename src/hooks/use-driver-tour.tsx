@@ -1,19 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { driver } from "driver.js";
+import { Driver, driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
 export function useDriverTour() {
-  const [driverObj, setDriverObj] = useState<any>(null);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [driverObj, setDriverObj] = useState<Driver | null>(null);
+  const hasVisited = localStorage.getItem("sudoku-tour-completed");
 
   useEffect(() => {
-    // Check if this is the first visit
-    const hasVisited = localStorage.getItem("sudoku-tour-completed");
-    setIsFirstVisit(!hasVisited);
-
-    // Initialize driver
     const driverInstance = driver({
       showProgress: true,
       steps: [
@@ -68,6 +63,15 @@ export function useDriverTour() {
           },
         },
         {
+          element: "#solution",
+          popover: {
+            title: "Solution",
+            description: "Click here to see the solution.",
+            side: "top",
+            align: "center",
+          },
+        },
+        {
           element: "#timer-display",
           popover: {
             title: "Timer",
@@ -81,7 +85,6 @@ export function useDriverTour() {
       prevBtnText: "Previous",
       doneBtnText: "Done",
       onDestroyed: () => {
-        // Mark tour as completed
         localStorage.setItem("sudoku-tour-completed", "true");
       },
     });
@@ -99,5 +102,5 @@ export function useDriverTour() {
     }
   };
 
-  return { startTour, isFirstVisit };
+  return { startTour, isFirstVisit: !hasVisited };
 }

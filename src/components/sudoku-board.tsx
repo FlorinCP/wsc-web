@@ -1,10 +1,10 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { SudokuCellPopover } from "@/components/sudoku-cell-popover";
 import type { CellType } from "@/types/sudoku";
+import { SudokuGrid } from "@/components/sudoku-grid";
 
-interface SudokuBoardProps {
+export interface SudokuBoardProps {
   board: CellType[][];
   selectedCell: { row: number; col: number } | null;
   onCellSelect: (row: number, col: number) => void;
@@ -24,29 +24,14 @@ export function SudokuBoard({
   return (
     <Card className="w-full">
       <CardContent className="p-4">
-        <div
-          className="grid grid-cols-9 gap-0.5 md:gap-1 aspect-square"
-          id="sudoku-board"
-        >
-          {board.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <SudokuCellPopover
-                key={`${rowIndex}-${colIndex}`}
-                cell={cell}
-                row={rowIndex}
-                col={colIndex}
-                isSelected={
-                  selectedCell?.row === rowIndex &&
-                  selectedCell?.col === colIndex
-                }
-                onSelect={() => onCellSelect(rowIndex, colIndex)}
-                onNumberInput={onNumberInput}
-                isNotesMode={isNotesMode}
-                onToggleNotes={onToggleNotes}
-              />
-            )),
-          )}
-        </div>
+        <SudokuGrid
+          board={board}
+          selectedCell={selectedCell}
+          onCellSelect={onCellSelect}
+          onNumberInput={onNumberInput}
+          isNotesMode={isNotesMode}
+          onToggleNotes={onToggleNotes}
+        />
       </CardContent>
     </Card>
   );

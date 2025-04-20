@@ -9,6 +9,7 @@ import {
   isValidBoard,
   isBoardComplete,
 } from "@/utils/sudoku-core";
+import { parseSudokuString } from "@/utils/sudoku-utils";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -226,13 +227,13 @@ export function useSudokuGame() {
   }, [difficulty]);
 
   const handleSolutionFound = useCallback(
-    (solution: number[][]) => {
+    (solution: string) => {
       // Save current state to history
       const newHistory = history.slice(0, historyIndex + 1);
       newHistory.push(JSON.parse(JSON.stringify(board)));
       setHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
-
+      const solutionArray = parseSudokuString(solution);
       // Update the board with the solution
       const newBoard = [...board];
       for (let row = 0; row < 9; row++) {
@@ -240,7 +241,7 @@ export function useSudokuGame() {
           if (!newBoard[row][col].isOriginal) {
             newBoard[row][col] = {
               ...newBoard[row][col],
-              value: solution[row][col],
+              value: solutionArray[row][col],
               notes: [],
               isInvalid: false,
             };
