@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SudokuBoard } from "@/components/sudoku-board"
-import { SudokuKeypad } from "@/components/sudoku-keypad"
-import { SudokuControls } from "@/components/sudoku-controls"
-import { SudokuHeader } from "@/components/sudoku-header"
-import { SudokuSolverPanel } from "@/components/sudoku-solver-panel"
-import { SudokuCompletionDialog } from "@/components/sudoku-completion-dialog"
-import { useSudokuGame } from "@/hooks/use-sudoku-game"
-import { useDriverTour } from "@/hooks/use-driver-tour"
-import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation"
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SudokuBoard } from "@/components/sudoku-board";
+import { SudokuKeypad } from "@/components/sudoku-keypad";
+import { SudokuControls } from "@/components/sudoku-controls";
+import { SudokuHeader } from "@/components/sudoku-header";
+import { SudokuSolverPanel } from "@/components/sudoku-solver-panel";
+import { SudokuCompletionDialog } from "@/components/sudoku-completion-dialog";
+import { useSudokuGame } from "@/hooks/use-sudoku-game";
+import { useDriverTour } from "@/hooks/use-driver-tour";
+import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
 
 export function Sudoku() {
-  const [activeTab, setActiveTab] = useState<string>("play")
-  const { startTour, isFirstVisit } = useDriverTour()
+  const [activeTab, setActiveTab] = useState<string>("play");
+  const { startTour, isFirstVisit } = useDriverTour();
 
   const {
     board,
@@ -38,7 +38,7 @@ export function Sudoku() {
     setShowCompletionDialog,
     getCurrentBoardAsString,
     formatTime,
-  } = useSudokuGame()
+  } = useSudokuGame();
 
   // Set up keyboard navigation
   useKeyboardNavigation({
@@ -48,7 +48,7 @@ export function Sudoku() {
     handleClearCell,
     toggleNotesMode,
     isNotesMode,
-  })
+  });
 
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
@@ -77,7 +77,10 @@ export function Sudoku() {
           />
 
           <div id="number-keypad" className="mt-6">
-            <SudokuKeypad onNumberClick={handleNumberInput} notesMode={isNotesMode} />
+            <SudokuKeypad
+              onNumberClick={handleNumberInput}
+              notesMode={isNotesMode}
+            />
           </div>
 
           <div id="game-controls" className="mt-4">
@@ -95,7 +98,10 @@ export function Sudoku() {
         </TabsContent>
 
         <TabsContent value="solve" className="mt-4">
-          <SudokuSolverPanel currentBoard={getCurrentBoardAsString()} onSolutionFound={handleSolutionFound} />
+          <SudokuSolverPanel
+            currentBoard={getCurrentBoardAsString()}
+            onSolutionFound={handleSolutionFound}
+          />
         </TabsContent>
       </Tabs>
 
@@ -106,5 +112,5 @@ export function Sudoku() {
         onPlayAgain={initializeBoard}
       />
     </div>
-  )
+  );
 }

@@ -1,21 +1,25 @@
-"use client"
+"use client";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
-import { Pencil } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useState } from "react"
-import type { CellType } from "./sudoku"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import type { CellType } from "./sudoku";
 
 interface SudokuCellPopoverProps {
-  cell: CellType
-  row: number
-  col: number
-  isSelected: boolean
-  onSelect: () => void
-  onNumberInput: (number: number) => void
-  isNotesMode: boolean
-  onToggleNotes: () => void
+  cell: CellType;
+  row: number;
+  col: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  onNumberInput: (number: number) => void;
+  isNotesMode: boolean;
+  onToggleNotes: () => void;
 }
 
 export function SudokuCellPopover({
@@ -28,23 +32,23 @@ export function SudokuCellPopover({
   isNotesMode,
   onToggleNotes,
 }: SudokuCellPopoverProps) {
-  const [open, setOpen] = useState(false)
-  const boxRow = Math.floor(row / 3)
-  const boxCol = Math.floor(col / 3)
-  const isEvenBox = (boxRow + boxCol) % 2 === 0
+  const [open, setOpen] = useState(false);
+  const boxRow = Math.floor(row / 3);
+  const boxCol = Math.floor(col / 3);
+  const isEvenBox = (boxRow + boxCol) % 2 === 0;
 
   // Don't allow interaction with original cells
   const handleClick = () => {
-    onSelect()
+    onSelect();
     if (!cell.isOriginal) {
-      setOpen(true)
+      setOpen(true);
     }
-  }
+  };
 
   const handleNumberClick = (number: number) => {
-    onNumberInput(number)
-    setOpen(false)
-  }
+    onNumberInput(number);
+    setOpen(false);
+  };
 
   return (
     <Popover open={open && !cell.isOriginal} onOpenChange={setOpen}>
@@ -67,13 +71,17 @@ export function SudokuCellPopover({
           tabIndex={0}
         >
           {cell.value > 0 ? (
-            <span className={cn(cell.isOriginal && "font-bold")}>{cell.value}</span>
+            <span className={cn(cell.isOriginal && "font-bold")}>
+              {cell.value}
+            </span>
           ) : (
             <div className="grid grid-cols-3 grid-rows-3 gap-0 w-full h-full p-0.5">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <div key={num} className="flex items-center justify-center">
                   {cell.notes.includes(num) && (
-                    <span className="text-[8px] md:text-[10px] text-muted-foreground">{num}</span>
+                    <span className="text-[8px] md:text-[10px] text-muted-foreground">
+                      {num}
+                    </span>
                   )}
                 </div>
               ))}
@@ -90,8 +98,8 @@ export function SudokuCellPopover({
               size="icon"
               className="h-6 w-6"
               onClick={(e) => {
-                e.stopPropagation()
-                onToggleNotes()
+                e.stopPropagation();
+                onToggleNotes();
               }}
             >
               <Pencil className="h-3 w-3" />
@@ -103,7 +111,10 @@ export function SudokuCellPopover({
                 key={number}
                 variant="outline"
                 size="sm"
-                className={cn("h-8 w-8 p-0", isNotesMode && "bg-secondary/50 text-secondary-foreground")}
+                className={cn(
+                  "h-8 w-8 p-0",
+                  isNotesMode && "bg-secondary/50 text-secondary-foreground",
+                )}
                 onClick={() => handleNumberClick(number)}
               >
                 {number}
@@ -115,8 +126,8 @@ export function SudokuCellPopover({
             size="sm"
             className="mt-1"
             onClick={() => {
-              handleNumberClick(0) // 0 will clear the cell
-              setOpen(false)
+              handleNumberClick(0); // 0 will clear the cell
+              setOpen(false);
             }}
           >
             Clear
@@ -124,5 +135,5 @@ export function SudokuCellPopover({
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

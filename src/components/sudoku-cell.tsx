@@ -1,20 +1,26 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import type { CellType } from "./sudoku"
+import { cn } from "@/lib/utils";
+import type { CellType } from "./sudoku";
 
 interface SudokuCellProps {
-  cell: CellType
-  row: number
-  col: number
-  isSelected: boolean
-  onSelect: () => void
+  cell: CellType;
+  row: number;
+  col: number;
+  isSelected: boolean;
+  onSelect: () => void;
 }
 
-export function SudokuCell({ cell, row, col, isSelected, onSelect }: SudokuCellProps) {
-  const boxRow = Math.floor(row / 3)
-  const boxCol = Math.floor(col / 3)
-  const isEvenBox = (boxRow + boxCol) % 2 === 0
+export function SudokuCell({
+  cell,
+  row,
+  col,
+  isSelected,
+  onSelect,
+}: SudokuCellProps) {
+  const boxRow = Math.floor(row / 3);
+  const boxCol = Math.floor(col / 3);
+  const isEvenBox = (boxRow + boxCol) % 2 === 0;
 
   return (
     <div
@@ -40,12 +46,14 @@ export function SudokuCell({ cell, row, col, isSelected, onSelect }: SudokuCellP
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <div key={num} className="flex items-center justify-center">
               {cell.notes.includes(num) && (
-                <span className="text-[8px] md:text-[10px] text-muted-foreground">{num}</span>
+                <span className="text-[8px] md:text-[10px] text-muted-foreground">
+                  {num}
+                </span>
               )}
             </div>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }

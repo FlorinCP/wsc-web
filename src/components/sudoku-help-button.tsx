@@ -1,11 +1,16 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { HelpCircle } from "lucide-react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SudokuHelpButtonProps {
-  onStartTour: () => void
+  onStartTour: () => void;
 }
 
 export function SudokuHelpButton({ onStartTour }: SudokuHelpButtonProps) {
@@ -13,7 +18,13 @@ export function SudokuHelpButton({ onStartTour }: SudokuHelpButtonProps) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" onClick={onStartTour} className="rounded-full" aria-label="Help">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onStartTour}
+            className="rounded-full"
+            aria-label="Help"
+          >
             <HelpCircle className="h-5 w-5" />
           </Button>
         </TooltipTrigger>
@@ -22,5 +33,5 @@ export function SudokuHelpButton({ onStartTour }: SudokuHelpButtonProps) {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }

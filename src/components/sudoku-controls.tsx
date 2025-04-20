@@ -1,17 +1,24 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { RotateCcw, Lightbulb, Check, RefreshCw, Pencil, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import {
+  RotateCcw,
+  Lightbulb,
+  Check,
+  RefreshCw,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 interface SudokuControlsProps {
-  onNewGame: () => void
-  onUndo: () => void
-  onHint: () => void
-  onCheck: () => void
-  onToggleNotes: () => void
-  onClearCell: () => void
-  isNotesMode: boolean
-  canUndo: boolean
+  onNewGame: () => void;
+  onUndo: () => void;
+  onHint: () => void;
+  onCheck: () => void;
+  onToggleNotes: () => void;
+  onClearCell: () => void;
+  isNotesMode: boolean;
+  canUndo: boolean;
 }
 
 export function SudokuControls({
@@ -26,11 +33,22 @@ export function SudokuControls({
 }: SudokuControlsProps) {
   return (
     <div className="flex flex-wrap justify-center gap-2 w-full">
-      <Button variant="outline" size="icon" onClick={onNewGame} title="New Game">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onNewGame}
+        title="New Game"
+      >
         <RefreshCw className="h-4 w-4" />
       </Button>
 
-      <Button variant="outline" size="icon" onClick={onUndo} disabled={!canUndo} title="Undo">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onUndo}
+        disabled={!canUndo}
+        title="Undo"
+      >
         <RotateCcw className="h-4 w-4" />
       </Button>
 
@@ -52,9 +70,14 @@ export function SudokuControls({
         <Pencil className="h-4 w-4" />
       </Button>
 
-      <Button variant="outline" size="icon" onClick={onClearCell} title="Clear Cell">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={onClearCell}
+        title="Clear Cell"
+      >
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
-  )
+  );
 }

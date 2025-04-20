@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { driver } from "driver.js"
-import "driver.js/dist/driver.css"
+import { useEffect, useState } from "react";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 
 export function useDriverTour() {
-  const [driverObj, setDriverObj] = useState<any>(null)
-  const [isFirstVisit, setIsFirstVisit] = useState(true)
+  const [driverObj, setDriverObj] = useState<any>(null);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
   useEffect(() => {
     // Check if this is the first visit
-    const hasVisited = localStorage.getItem("sudoku-tour-completed")
-    setIsFirstVisit(!hasVisited)
+    const hasVisited = localStorage.getItem("sudoku-tour-completed");
+    setIsFirstVisit(!hasVisited);
 
     // Initialize driver
     const driverInstance = driver({
@@ -21,7 +21,8 @@ export function useDriverTour() {
           element: "#sudoku-board",
           popover: {
             title: "Sudoku Board",
-            description: "This is your 9x9 Sudoku grid. Click on any cell to select it and enter a number.",
+            description:
+              "This is your 9x9 Sudoku grid. Click on any cell to select it and enter a number.",
             side: "bottom",
             align: "center",
           },
@@ -30,7 +31,8 @@ export function useDriverTour() {
           element: "#difficulty-tabs",
           popover: {
             title: "Difficulty Levels",
-            description: "Choose between Easy, Medium, and Hard difficulty levels.",
+            description:
+              "Choose between Easy, Medium, and Hard difficulty levels.",
             side: "bottom",
             align: "center",
           },
@@ -39,7 +41,8 @@ export function useDriverTour() {
           element: "#number-keypad",
           popover: {
             title: "Number Keypad",
-            description: "Click these buttons to enter numbers into the selected cell.",
+            description:
+              "Click these buttons to enter numbers into the selected cell.",
             side: "top",
             align: "center",
           },
@@ -48,7 +51,8 @@ export function useDriverTour() {
           element: "#game-controls",
           popover: {
             title: "Game Controls",
-            description: "Use these controls to start a new game, undo moves, get hints, and more.",
+            description:
+              "Use these controls to start a new game, undo moves, get hints, and more.",
             side: "top",
             align: "center",
           },
@@ -57,7 +61,8 @@ export function useDriverTour() {
           element: "#notes-toggle",
           popover: {
             title: "Notes Mode",
-            description: "Toggle notes mode to add multiple candidate numbers to a cell.",
+            description:
+              "Toggle notes mode to add multiple candidate numbers to a cell.",
             side: "left",
             align: "center",
           },
@@ -77,22 +82,22 @@ export function useDriverTour() {
       doneBtnText: "Done",
       onDestroyed: () => {
         // Mark tour as completed
-        localStorage.setItem("sudoku-tour-completed", "true")
+        localStorage.setItem("sudoku-tour-completed", "true");
       },
-    })
+    });
 
-    setDriverObj(driverInstance)
+    setDriverObj(driverInstance);
 
     return () => {
-      driverInstance.destroy()
-    }
-  }, [])
+      driverInstance.destroy();
+    };
+  }, []);
 
   const startTour = () => {
     if (driverObj) {
-      driverObj.drive()
+      driverObj.drive();
     }
-  }
+  };
 
-  return { startTour, isFirstVisit }
+  return { startTour, isFirstVisit };
 }
