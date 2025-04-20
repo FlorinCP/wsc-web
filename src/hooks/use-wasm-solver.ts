@@ -1,143 +1,146 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import {stringToBoard} from "../../utils/sudoku-utils";
+import { useState, useEffect, useCallback } from "react"
+import { stringToBoard } from "@/utils/sudoku-utils"
 
-// Define the interface for the WASM module with pthread support
-interface SudokuWasm {
-  _solveSudoku: (puzzlePtr: number) => number
-  _solveBatch: (count: number) => number
-  _allocateInputBuffer: (size: number) => void
-  _allocateOutputBuffer: (size: number) => void
-  _allocateSolvedFlags: (size: number) => void
-  _freeAllBuffers: () => void
-  _setPuzzle: (index: number, puzzlePtr: number) => void
-  _getSolution: (index: number) => number
-  _wasSolved: (index: number) => boolean
-  _getCompletedThreadCount: () => number
-  _requestStop: () => void
-  _resetStopFlag: () => void
-  _malloc: (size: number) => number
-  _free: (ptr: number) => void
-  HEAPU8: Uint8Array
-  ccall: (name: string, returnType: string, argTypes: string[], args: any[]) => any
-  cwrap: (name: string, returnType: string, argTypes: string[]) => (...args: any[]) => any
+// Define the complete Module type with all exported functions
+interface EmscriptenModule {
+  // Single puzzle solving
+  ccall?: (funcName: string, returnType: string, argTypes: string[], args: any[]) => any;
+  
+  // Batch processing functions
+  _allocateInputBuffer?: (size: number) => void;
+  _allocateOutputBuffer?: (size: number) => void;
+  _allocateSolvedFlags?: (size: number) => void;
+  _freeAllBuffers?: () => void;
+  _setPuzzle?: (index: number, puzzle: string) => void;
+  _getSolution?: (index: number) => string;
+  _wasSolved?: (index: number) => boolean;
+  _solveBatch?: (count: number) => number;
+  _getCompletedThreadCount?: () => number;
+  _requestStop?: () => void;
+  _resetStopFlag?: () => void;
+
+  // Module lifecycle
+  onRuntimeInitialized?: () => void;
+  onAbort?: (error: any) => void;
+  locateFile?: (path: string) => string;
+}
+
+declare global {
+  interface Window {
+    Module: EmscriptenModule;
+  }
 }
 
 export function useWasmSolver() {
-  const [wasmModule, setWasmModule] = useState<SudokuWasm | null>(null)
+  const [wasmModule, setWasmModule] = useState<EmscriptenModule | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isCrossOriginIsolated, setIsCrossOriginIsolated] = useState(false)
-  const moduleRef = useRef<any>(null)
-
-  // Check if the browser environment supports cross-origin isolation
-  useEffect(() => {
-    // Check if the page is cross-origin isolated (required for SharedArrayBuffer)
-    setIsCrossOriginIsolated(typeof window !== "undefined" && window.crossOriginIsolated === true)
-
-    if (typeof window !== "undefined" && !window.crossOriginIsolated) {
-      console.warn(
-        "Cross-Origin Isolation is not enabled. WebAssembly threads may not work. " +
-          "Make sure your server sets the COOP and COEP headers.",
-      )
-    }
-  }, [])
+  const [isIsolated, setIsIsolated] = useState(false)
+  const [batchProgress, setBatchProgress] = useState<number>(0)
 
   // Load the WASM module
   useEffect(() => {
-    async function loadWasm() {
-      if (moduleRef.current) return
+    const crossOriginIsolated = typeof window !== "undefined" && window.crossOriginIsolated === true
+    setIsIsolated(crossOriginIsolated)
 
+    if (!crossOriginIsolated) {
+      setError("Cross-Origin Isolation is not enabled. WebAssembly threads may not work.")
+      return
+    }
+
+    let isMounted = true
+    let currentModule: Partial<EmscriptenModule> | null = null
+
+    async function loadWasm() {
       try {
         setIsLoading(true)
         setError(null)
 
-        // Create a global variable to receive the module
-        // This is necessary because Emscripten's pthread implementation
-        // needs a global reference
-        window.Module = window.Module || {}
-
-        // Add locateFile to help Emscripten find the .wasm file
-        window.Module.locateFile = (path: string) => {
-          if (path.endsWith(".wasm")) {
-            return "/sudoku_pt.wasm"
-          }
-          return path
+        // Check if Module is already initialized
+        if (window.Module?.ccall) {
+          setWasmModule(window.Module)
+          setIsLoading(false)
+          return
         }
 
-        // Load the JavaScript glue code that Emscripten generated
-        const script = document.createElement("script")
-        script.src = "./wasm/sudoku_pt.js"
+        // Create a new Module object
+        currentModule = {
+          locateFile: (path: string) => {
+            if (path.endsWith(".wasm")) return "/wasm/sudoku_pt.wasm"
+            return path
+          },
+          onRuntimeInitialized: () => {
+            if (isMounted) {
+              setWasmModule(window.Module)
+              setIsLoading(false)
+            }
+          },
+          onAbort: (error: any) => {
+            if (isMounted) {
+              setError(`WebAssembly initialization failed: ${error}`)
+              setIsLoading(false)
+            }
+          },
+        }
+
+        // Set the global Module object
+        window.Module = currentModule
+
+        // Load the WASM module using a script tag
+        const script = document.createElement('script')
+        script.src = '/wasm/sudoku_pt.js'
         script.async = true
-
-        // Wait for the script to load and initialize
-        const scriptLoaded = new Promise((resolve, reject) => {
-          script.onload = resolve
-          script.onerror = () => reject(new Error("Failed to load WebAssembly script"))
-        })
-
+        script.onerror = () => {
+          if (isMounted) {
+            setError('Failed to load WebAssembly script')
+            setIsLoading(false)
+          }
+        }
         document.body.appendChild(script)
-        await scriptLoaded
 
-        // Wait for the module to initialize
-        // Emscripten will call this when the module is ready
-        window.Module.onRuntimeInitialized = () => {
-          moduleRef.current = window.Module
-          setWasmModule(window.Module as unknown as SudokuWasm)
-          setIsLoading(false)
-        }
-
-        // Handle any errors during initialization
-        window.Module.onAbort = (error: any) => {
-          setError(`WebAssembly module initialization failed: ${error}`)
-          setIsLoading(false)
-        }
+        // Wait for the script to load
+        await new Promise<void>((resolve, reject) => {
+          script.onload = () => resolve()
+          script.onerror = () => reject(new Error('Failed to load WebAssembly script'))
+        })
       } catch (err) {
         console.error("Failed to load WASM module:", err)
-        setError(`Failed to load Sudoku solver: ${err instanceof Error ? err.message : String(err)}`)
-        setIsLoading(false)
+        if (isMounted) {
+          setError(`Failed to load Sudoku solver: ${err instanceof Error ? err.message : String(err)}`)
+          setIsLoading(false)
+        }
       }
     }
 
-    if (typeof window !== "undefined" && isCrossOriginIsolated) {
-      loadWasm()
-    }
+    loadWasm()
 
-    // Cleanup function
     return () => {
-      if (moduleRef.current && moduleRef.current._freeAllBuffers) {
+      isMounted = false
+      if (window.Module?._freeAllBuffers) {
         try {
-          moduleRef.current._freeAllBuffers()
+          window.Module._freeAllBuffers()
         } catch (e) {
           console.error("Error freeing WASM memory:", e)
         }
       }
+      // Only clear Module if it's our instance
+      if (currentModule && window.Module === currentModule) {
+        window.Module = {} as EmscriptenModule
+      }
     }
-  }, [isCrossOriginIsolated])
+  }, [])
 
-  // Format a board string for the WASM module
-  const formatBoardForWasm = (boardStr: string): string => {
-    // Remove any non-digit characters and replace spaces or dots with zeros
-    return boardStr
-      .replace(/[^\d.]/g, "")
-      .replace(/\./g, "0")
-      .padEnd(81, "0")
-      .substring(0, 81)
-  }
-
-  // Solve a Sudoku puzzle using the WASM module
-  const solvePuzzle = async (puzzleStr: string): Promise<number[][] | null> => {
-    if (!wasmModule) {
-      setError("Solver not loaded yet. Please wait.")
+  // Single puzzle solving
+  const solvePuzzle = useCallback(async (puzzleStr: string): Promise<number[][] | null> => {
+    if (!wasmModule?.ccall) {
+      setError("Solver not loaded yet")
       return null
     }
 
-    if (!isCrossOriginIsolated) {
-      setError(
-        "Cross-Origin Isolation is not enabled. WebAssembly threads cannot be used. " +
-          "Please make sure your server sets the COOP and COEP headers.",
-      )
+    if (!isIsolated) {
+      setError("Cross-Origin Isolation is required for WebAssembly threads")
       return null
     }
 
@@ -145,102 +148,113 @@ export function useWasmSolver() {
       setIsLoading(true)
       setError(null)
 
-      const formattedBoard = formatBoardForWasm(puzzleStr)
+      const formattedPuzzle = puzzleStr
+        .replace(/[^\d.]/g, "")
+        .replace(/\./g, "0")
+        .padEnd(81, "0")
+        .substring(0, 81)
 
-      // Use ccall for a cleaner interface with the C++ functions
-      const result = wasmModule.ccall("solveSudoku", "string", ["string"], [formattedBoard])
+      const result = wasmModule.ccall("solveSudoku", "string", ["string"], [formattedPuzzle])
 
       if (result.startsWith("No solution")) {
-        setError("No solution found for the current board.")
+        setError("No solution found for this puzzle")
         return null
       }
 
-      // Convert the solution to a 2D array
       return stringToBoard(result)
     } catch (err) {
-      console.error("Error solving board:", err)
-      setError(`An error occurred while solving the board: ${err instanceof Error ? err.message : String(err)}`)
+      console.error("Error solving puzzle:", err)
+      setError("Failed to solve the puzzle")
       return null
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [wasmModule, isIsolated])
 
-  // Solve multiple puzzles in batch mode
-  const solveBatch = async (puzzles: string[]): Promise<(number[][] | null)[]> => {
-    if (!wasmModule) {
-      setError("Solver not loaded yet. Please wait.")
-      return []
+  // Batch puzzle solving
+  const solveBatch = useCallback(async (puzzles: string[]): Promise<{
+    solutions: (number[][] | null)[];
+    solvedCount: number;
+  }> => {
+    if (!wasmModule?._solveBatch || !wasmModule._allocateInputBuffer || !wasmModule._allocateOutputBuffer || 
+        !wasmModule._allocateSolvedFlags || !wasmModule._setPuzzle || !wasmModule._getSolution || 
+        !wasmModule._wasSolved || !wasmModule._freeAllBuffers) {
+      setError("Batch solver not loaded yet")
+      return { solutions: [], solvedCount: 0 }
     }
 
-    if (!isCrossOriginIsolated) {
-      setError(
-        "Cross-Origin Isolation is not enabled. WebAssembly threads cannot be used. " +
-          "Please make sure your server sets the COOP and COEP headers.",
-      )
-      return []
+    if (!isIsolated) {
+      setError("Cross-Origin Isolation is required for WebAssembly threads")
+      return { solutions: [], solvedCount: 0 }
     }
 
     try {
       setIsLoading(true)
       setError(null)
+      setBatchProgress(0)
 
       const count = puzzles.length
-
+      
       // Allocate buffers
-      wasmModule.ccall("allocateInputBuffer", null, ["number"], [count * 81])
-      wasmModule.ccall("allocateOutputBuffer", null, ["number"], [count * 81])
-      wasmModule.ccall("allocateSolvedFlags", null, ["number"], [count])
-
-      // Set puzzles
-      for (let i = 0; i < count; i++) {
-        const formattedPuzzle = formatBoardForWasm(puzzles[i])
-        wasmModule.ccall("setPuzzle", null, ["number", "string"], [i, formattedPuzzle])
+      wasmModule._allocateInputBuffer(count * 81)
+      wasmModule._allocateOutputBuffer(count * 81)
+      wasmModule._allocateSolvedFlags(count)
+      if (wasmModule._resetStopFlag) {
+        wasmModule._resetStopFlag()
       }
 
-      // Solve the batch
-      const solvedCount = wasmModule.ccall("solveBatch", "number", ["number"], [count])
+      // Set puzzles in input buffer
+      puzzles.forEach((puzzle, index) => {
+        const formattedPuzzle = puzzle
+          .replace(/[^\d.]/g, "")
+          .replace(/\./g, "0")
+          .padEnd(81, "0")
+          .substring(0, 81)
+        wasmModule._setPuzzle(index, formattedPuzzle)
+      })
+
+      // Start batch solving
+      const solvedCount = wasmModule._solveBatch(count)
 
       // Get solutions
       const solutions: (number[][] | null)[] = []
       for (let i = 0; i < count; i++) {
-        const wasSolved = wasmModule.ccall("wasSolved", "boolean", ["number"], [i])
-
-        if (wasSolved) {
-          const solution = wasmModule.ccall("getSolution", "string", ["number"], [i])
+        if (wasmModule._wasSolved(i)) {
+          const solution = wasmModule._getSolution(i)
           solutions.push(stringToBoard(solution))
         } else {
           solutions.push(null)
         }
       }
 
-      // Free buffers
-      wasmModule.ccall("freeAllBuffers", null, [], [])
-
-      return solutions
+      return { solutions, solvedCount }
     } catch (err) {
       console.error("Error solving batch:", err)
-      setError(`An error occurred while solving the batch: ${err instanceof Error ? err.message : String(err)}`)
-      return []
+      setError("Failed to solve batch of puzzles")
+      return { solutions: [], solvedCount: 0 }
     } finally {
       setIsLoading(false)
+      setBatchProgress(100)
+      if (wasmModule._freeAllBuffers) {
+        wasmModule._freeAllBuffers()
+      }
     }
-  }
+  }, [wasmModule, isIsolated])
+
+  // Stop batch processing
+  const stopBatch = useCallback(() => {
+    if (wasmModule?._requestStop) {
+      wasmModule._requestStop()
+    }
+  }, [wasmModule])
 
   return {
     solvePuzzle,
     solveBatch,
+    stopBatch,
     isLoading,
     error,
-    setError,
-    wasmLoaded: !!wasmModule,
-    isCrossOriginIsolated,
-  }
-}
-
-// Add this to make TypeScript happy with the global Module
-declare global {
-  interface Window {
-    Module: any
+    isReady: !!wasmModule && isIsolated,
+    batchProgress,
   }
 }
