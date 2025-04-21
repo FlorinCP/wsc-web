@@ -9,7 +9,7 @@ import { useSudokuGame } from "@/hooks/use-sudoku-game";
 import { useDriverTour } from "@/hooks/use-driver-tour";
 import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
 import { Button } from "@/components/ui/button";
-import { useSudokuEngine } from "@/components/deepseek/use-sudoku-engine";
+import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
 
 export function Sudoku() {
   const { startTour } = useDriverTour();

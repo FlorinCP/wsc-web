@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileText, AlertTriangle } from "lucide-react";
-import { useSudokuEngine } from "@/components/deepseek/use-sudoku-engine";
+import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
 
 export function BatchSolver() {
   const { startBulkSolve, loadPuzzlesFromFile, isLoaded, error, isRunning } =
