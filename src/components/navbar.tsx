@@ -139,6 +139,18 @@ function DesktopNav({ pathname }: { pathname: string }) {
           </Link>
         </NavigationMenuItem>
         <NavigationMenuItem>
+          <Link href="/learn" legacyBehavior passHref>
+            <NavigationMenuLink
+              className={cn(
+                navigationMenuTriggerStyle(),
+                pathname === "/about" && "bg-accent text-accent-foreground",
+              )}
+            >
+              Learn
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
           <Link href="/batch-solve" legacyBehavior passHref>
             <NavigationMenuLink
               className={cn(
