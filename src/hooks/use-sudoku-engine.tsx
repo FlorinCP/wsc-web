@@ -19,11 +19,9 @@ export function useSudokuEngine(wasmPath: string) {
   useEffect(() => {
     const sudokuEngine = new SudokuEngine(wasmPath);
 
-    // Set up callbacks
     sudokuEngine.setStatusCallback(setStatus);
     sudokuEngine.setProgressCallback(setProgress);
 
-    // Initialize the engine
     sudokuEngine
       .initialize()
       .then(() => {
@@ -51,7 +49,6 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Load puzzles from file
   const loadPuzzlesFromFile = useCallback(
     async (file: File): Promise<number> => {
       if (!file || !engine) return 0;
@@ -84,7 +81,6 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Solve a single puzzle
   const solvePuzzle = useCallback(
     (puzzleString: string): SolveResult => {
       if (!engine) {
@@ -95,7 +91,6 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Start bulk solving
   const startBulkSolve = useCallback(
     (batchSize?: number): Promise<void> => {
       if (!engine) {
@@ -106,13 +101,11 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Stop processing
   const stopProcessing = useCallback((): void => {
     if (!engine) return;
     engine.stopProcessing();
   }, [engine]);
 
-  // Get a specific puzzle
   const getPuzzle = useCallback(
     (index: number): string | null => {
       if (!engine) return null;
@@ -121,7 +114,6 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Get a specific solution
   const getSolution = useCallback(
     (index: number): string | null => {
       if (!engine) return null;
@@ -130,25 +122,21 @@ export function useSudokuEngine(wasmPath: string) {
     [engine],
   );
 
-  // Get all solutions as text
   const getSolutionsText = useCallback((): string => {
     if (!engine) return "";
     return engine.getSolutionsText();
   }, [engine]);
 
-  // Get puzzle count
   const getPuzzleCount = useCallback((): number => {
     if (!engine) return 0;
     return engine.getPuzzleCount();
   }, [engine]);
 
-  // Is processing running
   const isRunning = useCallback((): boolean => {
     if (!engine) return false;
     return engine.isRunning();
   }, [engine]);
 
-  // Return the hook API
   return {
     status,
     isLoaded,

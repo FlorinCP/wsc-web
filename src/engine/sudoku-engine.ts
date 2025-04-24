@@ -84,6 +84,7 @@ export class SudokuEngine {
         };
 
         // Handle script loading error
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         script.onerror = (e) => {
           const error = new Error("Failed to load WebAssembly module");
           this.wasmError = error;

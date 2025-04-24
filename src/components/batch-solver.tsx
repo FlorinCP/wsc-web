@@ -21,6 +21,8 @@ import {
   Download,
   StopCircle,
   Loader2,
+  Clock,
+  Timer,
 } from "lucide-react";
 import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
 
@@ -85,10 +87,34 @@ export function BatchSolver() {
     URL.revokeObjectURL(url);
   };
 
-  // Calculate progress percentage
   const progressPercentage = progress
     ? Math.round((progress.solvedCount / progress.totalPuzzles) * 100)
     : 0;
+
+  const formatTime = (ms: number): string => {
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    const seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
+  const formatTimeRemaining = (seconds: number | null): string => {
+    if (seconds === null) return "Calculating...";
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  const formatEstimatedCompletion = (date: Date | null): string => {
+    if (!date) return "Calculating...";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <Card className="w-full max-w-screen-lg">
@@ -193,23 +219,12 @@ export function BatchSolver() {
                 <span>
                   {fileName} ({puzzleCount} puzzles)
                 </span>
-                {solveComplete && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadSolutions}
-                    className="ml-auto"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Solutions
-                  </Button>
-                )}
               </AlertDescription>
             </Alert>
           )}
 
           {isRunning() && progress && (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>
                   Processing: {progress.solvedCount} / {progress.totalPuzzles}
@@ -217,6 +232,50 @@ export function BatchSolver() {
                 <span>{progressPercentage}%</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
+
+              {/* Time Statistics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
+                <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Elapsed Time:</span>
+                  </div>
+                  <span className="font-mono">
+                    {formatTime(progress.elapsedTime)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                  <div className="flex items-center">
+                    <Timer className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Time Remaining:</span>
+                  </div>
+                  <span className="font-mono">
+                    {formatTimeRemaining(progress.timeRemaining)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Est. Completion:</span>
+                  </div>
+                  <span className="font-mono">
+                    {formatEstimatedCompletion(progress.estimatedCompletion)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Avg. Solve Time:</span>
+                  </div>
+                  <span className="font-mono">
+                    {formatTime(progress.averageSolveTime)}
+                  </span>
+                </div>
+              </div>
+
               <p className="text-xs text-muted-foreground">{status}</p>
             </div>
           )}
@@ -225,8 +284,15 @@ export function BatchSolver() {
 
       {solveComplete && (
         <CardFooter className="flex justify-between border-t pt-4">
-          <div className="text-sm text-muted-foreground">
-            Successfully solved {progress?.solvedCount || puzzleCount} puzzles
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Check className="h-4 w-4 mr-2 text-green-500" />
+            Successfully solved {progress?.solvedCount || 0} /{" "}
+            {progress?.totalPuzzles || puzzleCount} puzzles
+            {progress && (
+              <span className="ml-2">
+                in {formatTime(progress.elapsedTime)}
+              </span>
+            )}
           </div>
           <Button variant="outline" size="sm" onClick={handleDownloadSolutions}>
             <Download className="mr-2 h-4 w-4" />
