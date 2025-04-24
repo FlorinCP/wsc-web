@@ -37,7 +37,7 @@ export function BatchSolver() {
     progress,
     status,
     getSolutionsText,
-  } = useSudokuEngine("/wasm/sudoku_pt.js");
+  } = useSudokuEngine();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>("");

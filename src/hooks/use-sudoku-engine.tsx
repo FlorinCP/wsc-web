@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  SudokuEngine,
-  SudokuProgress,
-  SolveResult,
-} from "@/engine/sudoku-engine";
+import { SudokuEngine, SudokuProgress, SolveResult } from "sudoku-wasm-engine";
 
 export function useSudokuEngine(wasmPath: string) {
   const [engine, setEngine] = useState<SudokuEngine | null>(null);
@@ -17,7 +13,7 @@ export function useSudokuEngine(wasmPath: string) {
   const [progress, setProgress] = useState<SudokuProgress | null>(null);
 
   useEffect(() => {
-    const sudokuEngine = new SudokuEngine(wasmPath);
+    const sudokuEngine = new SudokuEngine();
 
     sudokuEngine.setStatusCallback(setStatus);
     sudokuEngine.setProgressCallback(setProgress);
