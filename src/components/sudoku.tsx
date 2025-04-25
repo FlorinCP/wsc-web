@@ -14,8 +14,7 @@ import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
 export function Sudoku() {
   const { startTour } = useDriverTour();
 
-  const { solvePuzzle, isLoaded, error, isRunning } =
-    useSudokuEngine("/wasm/sudoku_pt.js");
+  const { solvePuzzle, isLoaded, error, isRunning } = useSudokuEngine();
 
   const onSolution = () => {
     const solution = solvePuzzle(getCurrentBoardAsString());

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SudokuEngine, SudokuProgress, SolveResult } from "sudoku-wasm-engine";
 
-export function useSudokuEngine(wasmPath: string) {
+export function useSudokuEngine() {
   const [engine, setEngine] = useState<SudokuEngine | null>(null);
   const [status, setStatus] = useState<string>(
     "Initializing WebAssembly module...",
@@ -31,11 +31,10 @@ export function useSudokuEngine(wasmPath: string) {
 
     setEngine(sudokuEngine);
 
-    // Clean up on unmount
     return () => {
       sudokuEngine.dispose();
     };
-  }, [wasmPath]);
+  }, []);
 
   const loadPuzzles = useCallback(
     (content: string): number => {

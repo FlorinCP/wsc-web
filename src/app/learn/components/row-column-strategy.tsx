@@ -79,7 +79,7 @@ export function RowColumnStrategy() {
           <div className="space-y-2">
             <h3 className="font-medium">Single Position Rule</h3>
             <p>
-              If there's only one position in a row, column, or box where a
+              If there&#39;s only one position in a row, column, or box where a
               number can be placed, then that number must go in that position.
             </p>
           </div>
@@ -99,11 +99,12 @@ export function RowColumnStrategy() {
           <ol className="list-decimal list-inside space-y-2">
             <li>Pick a number (1-9) that appears several times on the board</li>
             <li>
-              For each row that doesn't have this number, mark where it could go
+              For each row that doesn&#39;t have this number, mark where it
+              could go
             </li>
             <li>
-              For each column that doesn't have this number, mark where it could
-              go
+              For each column that doesn&#39;t have this number, mark where it
+              could go
             </li>
             <li>
               Look for cells that are the only possible position in a row or

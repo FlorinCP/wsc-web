@@ -268,7 +268,6 @@ export function useSudokuGame() {
     const { row, col } = selectedCell;
     if (board[row][col].isOriginal) return;
 
-    // Save current state to history
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push(JSON.parse(JSON.stringify(board)));
     setHistory(newHistory);
@@ -306,17 +305,14 @@ export function useSudokuGame() {
     setBoard(newBoard);
   }, [board, solvedBoard]);
 
-  // Toggle notes mode
   const toggleNotesMode = useCallback(() => {
     setIsNotesMode((prev) => !prev);
   }, []);
 
-  // Initialize the game
   useEffect(() => {
     initializeBoard();
   }, [initializeBoard]);
 
-  // Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -329,7 +325,6 @@ export function useSudokuGame() {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  // Format timer
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -337,7 +332,6 @@ export function useSudokuGame() {
   }, []);
 
   return {
-    // State
     board,
     selectedCell,
     isNotesMode,
@@ -346,8 +340,6 @@ export function useSudokuGame() {
     showCompletionDialog,
     historyIndex,
     solvedBoard,
-
-    // Actions
     handleCellSelect,
     handleNumberInput,
     handleClearCell,

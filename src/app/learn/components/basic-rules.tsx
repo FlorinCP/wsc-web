@@ -9,11 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { driver } from "driver.js";
-import { useRef } from "react";
 
 export function BasicRules() {
-  const boardRef = useRef(null);
-
   const startBasicsTour = () => {
     const driverObj = driver({
       showProgress: true,

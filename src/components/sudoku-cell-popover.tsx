@@ -26,7 +26,6 @@ export function SudokuCellPopover({
   cell,
   row,
   col,
-  isSelected,
   onSelect,
   onNumberInput,
   isNotesMode,
