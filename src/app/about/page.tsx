@@ -76,13 +76,13 @@ export default function AboutPage() {
               <li>Find an empty cell.</li>
               <li>Try placing a valid number (1-9) in that cell.</li>
               <li>
-                If the number is valid (doesn't conflict with row, column, or
-                3x3 box rules), recursively call the solver for the next empty
-                cell.
+                If the number is valid (doesn&#39;t conflict with row, column,
+                or 3x3 box rules), recursively call the solver for the next
+                empty cell.
               </li>
               <li>
-                If the recursive call returns a solution, we're done! Pass the
-                solution back up.
+                If the recursive call returns a solution, we&#39;re done! Pass
+                the solution back up.
               </li>
               <li>
                 If the recursive call fails (hits a dead end), or if the tried
@@ -237,7 +237,7 @@ int findMRV() const {
                   </p>
                   <p>
                     Crucially, when a cell is filled (<Code>place</Code>{" "}
-                    method), it's removed from this list not by shifting
+                    method), it&#39;s removed from this list not by shifting
                     elements (which is slow), but by swapping it with the *last*
                     element in the active part of the list and decrementing{" "}
                     <Code>emptyCount</Code>. A reverse mapping array{" "}
@@ -278,8 +278,8 @@ int findMRV() const {
             <p>
               Large memory buffers (<Code>inputBuffer</Code>,{" "}
               <Code>outputBuffer</Code>, <Code>solvedFlags</Code>) are allocated
-              within the WASM module's memory space. JavaScript code can fill
-              the input buffer with multiple puzzles using functions like{" "}
+              within the WASM module&#39;s memory space. JavaScript code can
+              fill the input buffer with multiple puzzles using functions like{" "}
               <Code>allocateInputBuffer</Code> and <Code>setPuzzle</Code>.
             </p>
             <p>
@@ -332,16 +332,16 @@ int findMRV() const {
         {/* Section: Interface */}
         <Card>
           <CardHeader>
-            <CardTitle>JavaScript Interface (`extern "C"`)</CardTitle>
+            <CardTitle>JavaScript Interface (`extern &#34;C&#34;`)</CardTitle>
             <CardDescription>
               How JavaScript communicates with the WASM module.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <p>
-              The <Code>extern "C"</Code> block in the C++ code defines the
-              functions that are exported and made callable from JavaScript once
-              the code is compiled to WASM. This includes:
+              The <Code>extern &#34;C&#34;</Code> block in the C++ code defines
+              the functions that are exported and made callable from JavaScript
+              once the code is compiled to WASM. This includes:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-4 text-sm">
               <li>
