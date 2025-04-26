@@ -2,7 +2,7 @@
 
 import { Clock } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SudokuHelpButton } from "@/components/sudoku-help-button";
+import { SudokuHelpButton } from "@/components/sudoku-game/sudoku-help-button";
 import type { Difficulty } from "@/hooks/use-sudoku-game";
 
 interface SudokuHeaderProps {

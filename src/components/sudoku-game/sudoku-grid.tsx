@@ -1,5 +1,5 @@
-import { SudokuCellPopover } from "@/components/sudoku-cell-popover";
-import { SudokuBoardProps } from "@/components/sudoku-board";
+import { SudokuCellPopover } from "@/components/sudoku-game/sudoku-cell-popover";
+import { SudokuBoardProps } from "@/components/sudoku-game/sudoku-board";
 
 export const SudokuGrid: React.FC<SudokuBoardProps> = ({
   board,

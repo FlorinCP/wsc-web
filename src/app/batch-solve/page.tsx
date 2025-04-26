@@ -1,4 +1,4 @@
-import { BatchSolver } from "@/components/batch-solver";
+import { BatchSolver } from "@/app/batch-solve/components/batch-solver";
 
 export default function BatchSolve() {
   return (

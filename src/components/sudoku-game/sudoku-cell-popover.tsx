@@ -32,11 +32,7 @@ export function SudokuCellPopover({
   onToggleNotes,
 }: SudokuCellPopoverProps) {
   const [open, setOpen] = useState(false);
-  const boxRow = Math.floor(row / 3);
-  const boxCol = Math.floor(col / 3);
-  const isEvenBox = (boxRow + boxCol) % 2 === 0;
 
-  // Don't allow interaction with original cells
   const handleClick = () => {
     onSelect();
     if (!cell.isOriginal) {
@@ -55,13 +51,13 @@ export function SudokuCellPopover({
         <div
           className={cn(
             "relative flex items-center justify-center aspect-square border border-border text-lg md:text-xl font-medium transition-all cursor-pointer select-none",
-            isEvenBox ? "bg-background" : "bg-muted/30",
             cell.isHighlighted &&
-              "bg-blue-50 border-none rounded-[2px] ring-2 ring-blue-500",
-            cell.isRelated && !cell.isHighlighted && "bg-blue-50",
+              "bg-blue-50 border-none rounded-[2px] ring-2 ring-blue-500 dark:bg-slate-800",
+            cell.isRelated &&
+              !cell.isHighlighted &&
+              "bg-blue-50 dark:bg-slate-800",
             cell.isInvalid && "bg-destructive/20 border-destructive",
             cell.isOriginal && !cell.isRelated && "bg-muted/70",
-            // Add thicker borders for box boundaries
             row % 3 === 0 && !cell.isRelated && "border-t-2 ",
             col % 3 === 0 && !cell.isRelated && "border-l-2",
             row === 8 && !cell.isRelated && "border-b-2",
@@ -126,7 +122,7 @@ export function SudokuCellPopover({
             size="sm"
             className="mt-1"
             onClick={() => {
-              handleNumberClick(0); // 0 will clear the cell
+              handleNumberClick(0);
               setOpen(false);
             }}
           >

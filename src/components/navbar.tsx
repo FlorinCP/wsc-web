@@ -1,4 +1,3 @@
-// components/Navbar.tsx
 "use client";
 
 import * as React from "react";
@@ -9,11 +8,9 @@ import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
@@ -69,72 +66,6 @@ function DesktopNav({ pathname }: { pathname: string }) {
               )}
             >
               Home
-            </NavigationMenuLink>
-          </Link>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger
-            className={cn(
-              pathname &&
-                ["/solver", "/generator", "/learn"].some((route) =>
-                  pathname.startsWith(route),
-                ) &&
-                "bg-accent text-accent-foreground",
-            )}
-          >
-            Features
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-              <li className="row-span-3">
-                <NavigationMenuLink asChild>
-                  <a
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                    href="/"
-                  >
-                    <div className="mb-2 mt-4 text-lg font-medium">
-                      Sudoku Solver
-                    </div>
-                    <p className="text-sm leading-tight text-muted-foreground">
-                      Solve any Sudoku puzzle with our powerful
-                      WebAssembly-based engine
-                    </p>
-                  </a>
-                </NavigationMenuLink>
-              </li>
-              <ListItem
-                href="/solver"
-                title="Solver"
-                active={pathname === "/solver"}
-              >
-                Solve individual puzzles or process batches
-              </ListItem>
-              <ListItem
-                href="/generator"
-                title="Generator"
-                active={pathname === "/generator"}
-              >
-                Generate new Sudoku puzzles of varying difficulty
-              </ListItem>
-              <ListItem
-                href="/learn"
-                title="Learn"
-                active={pathname === "/learn"}
-              >
-                Learn Sudoku strategies and techniques
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <Link href="/play" legacyBehavior passHref>
-            <NavigationMenuLink
-              className={cn(
-                navigationMenuTriggerStyle(),
-                pathname === "/about" && "bg-accent text-accent-foreground",
-              )}
-            >
-              Play
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>

@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { CellType } from "@/types/sudoku";
-import { SudokuGrid } from "@/components/sudoku-grid";
+import { SudokuGrid } from "@/components/sudoku-game/sudoku-grid";
 
 export interface SudokuBoardProps {
   board: CellType[][];

@@ -17,7 +17,7 @@ import { RowColumnStrategy } from "./components/row-column-strategy";
 import { BoxStrategy } from "./components/box-strategy";
 import { CandidateStrategy } from "./components/candidate-strategy";
 import { createExampleBoard } from "@/utils/example-boards";
-import { SudokuBoard } from "@/components/sudoku-board";
+import { SudokuBoard } from "@/components/sudoku-game/sudoku-board";
 
 export default function LearnPage() {
   const [selectedCell, setSelectedCell] = useState<{

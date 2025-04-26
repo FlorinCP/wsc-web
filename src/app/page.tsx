@@ -1,4 +1,4 @@
-import { Sudoku } from "@/components/sudoku";
+import { Sudoku } from "@/components/sudoku-game/sudoku";
 
 export default function Home() {
   return (

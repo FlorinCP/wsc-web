@@ -1,10 +1,10 @@
 "use client";
 
-import { SudokuBoard } from "@/components/sudoku-board";
-import { SudokuKeypad } from "@/components/sudoku-keypad";
-import { SudokuControls } from "@/components/sudoku-controls";
-import { SudokuHeader } from "@/components/sudoku-header";
-import { SudokuCompletionDialog } from "@/components/sudoku-completion-dialog";
+import { SudokuBoard } from "@/components/sudoku-game/sudoku-board";
+import { SudokuKeypad } from "@/components/sudoku-game/sudoku-keypad";
+import { SudokuControls } from "@/components/sudoku-game/sudoku-controls";
+import { SudokuHeader } from "@/components/sudoku-game/sudoku-header";
+import { SudokuCompletionDialog } from "@/components/sudoku-game/sudoku-completion-dialog";
 import { useSudokuGame } from "@/hooks/use-sudoku-game";
 import { useDriverTour } from "@/hooks/use-driver-tour";
 import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
