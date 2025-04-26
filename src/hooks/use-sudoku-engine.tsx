@@ -13,7 +13,7 @@ export function useSudokuEngine() {
   const [progress, setProgress] = useState<SudokuProgress | null>(null);
 
   useEffect(() => {
-    const sudokuEngine = new SudokuEngine();
+    const sudokuEngine = new SudokuEngine("./wasm/sudoku_pt.js");
 
     sudokuEngine.setStatusCallback(setStatus);
     sudokuEngine.setProgressCallback(setProgress);
