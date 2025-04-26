@@ -23,7 +23,6 @@ import {
   Loader2,
   Clock,
   Timer,
-  AlertCircle,
 } from "lucide-react";
 import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
 
@@ -146,7 +145,6 @@ export function BatchSolver() {
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>WebAssembly Not Loaded - Please Refresh</AlertTitle>
-
             <AlertDescription>
               WebAssembly solver requires cross-origin isolation. Some features
               may not work.
