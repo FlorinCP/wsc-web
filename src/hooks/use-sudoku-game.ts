@@ -10,6 +10,7 @@ import {
   isBoardComplete,
 } from "@/utils/sudoku-core";
 import { parseSudokuString } from "@/utils/sudoku-utils";
+import { toast } from "sonner";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -153,6 +154,10 @@ export function useSudokuGame() {
           number,
         );
 
+        if (!isValid) {
+          toast.error("Invalid move!");
+        }
+
         newBoard[row][col] = {
           ...newBoard[row][col],
           value: number,
@@ -224,6 +229,7 @@ export function useSudokuGame() {
     setTimer(0);
     setIsRunning(true);
     setShowCompletionDialog(false);
+    toast.success("New game started!");
   }, [difficulty]);
 
   const handleSolutionFound = useCallback(
@@ -287,6 +293,11 @@ export function useSudokuGame() {
     if (isBoardComplete(values)) {
       setIsRunning(false);
       setShowCompletionDialog(true);
+    }
+    if (isValidBoard(values)) {
+      toast.success("Hint provided!");
+    } else {
+      toast.error("Invalid board state after hint!");
     }
   }, [board, history, historyIndex, selectedCell, solvedBoard]);
 

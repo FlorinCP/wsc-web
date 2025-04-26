@@ -74,7 +74,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                pathname === "/about" && "bg-accent text-accent-foreground",
+                pathname === "/learn" && "bg-accent text-accent-foreground",
               )}
             >
               Learn
@@ -86,7 +86,8 @@ function DesktopNav({ pathname }: { pathname: string }) {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                pathname === "/about" && "bg-accent text-accent-foreground",
+                pathname === "/batch-solve" &&
+                  "bg-accent text-accent-foreground",
               )}
             >
               Batch Solve

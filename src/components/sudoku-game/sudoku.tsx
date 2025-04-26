@@ -10,6 +10,7 @@ import { useDriverTour } from "@/hooks/use-driver-tour";
 import { useKeyboardNavigation } from "@/hooks/use-keyboard-navigation";
 import { Button } from "@/components/ui/button";
 import { useSudokuEngine } from "@/hooks/use-sudoku-engine";
+import { toast } from "sonner";
 
 export function Sudoku() {
   const { startTour } = useDriverTour();
@@ -19,6 +20,7 @@ export function Sudoku() {
   const onSolution = () => {
     const solution = solvePuzzle(getCurrentBoardAsString());
     if (solution.solution) {
+      toast.success("Solution found!");
       handleSolutionFound(solution.solution);
     }
   };

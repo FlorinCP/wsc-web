@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { SudokuEngine, SudokuProgress, SolveResult } from "sudoku-wasm-engine";
+import { toast } from "sonner";
 
 export function useSudokuEngine() {
   const [engine, setEngine] = useState<SudokuEngine | null>(null);
@@ -23,6 +24,7 @@ export function useSudokuEngine() {
       .then(() => {
         setIsLoaded(true);
         setError(null);
+        toast.success("Sudoku engine loaded successfully");
       })
       .catch((err: Error) => {
         setError(err);
@@ -70,6 +72,7 @@ export function useSudokuEngine() {
           reject(new Error("Error reading file"));
         };
 
+        toast.info("Loading puzzles from file...");
         reader.readAsText(file);
       });
     },
@@ -79,6 +82,7 @@ export function useSudokuEngine() {
   const solvePuzzle = useCallback(
     (puzzleString: string): SolveResult => {
       if (!engine) {
+        toast.error("Engine not initialized");
         throw new Error("Engine not initialized");
       }
       return engine.solvePuzzle(puzzleString);
@@ -91,6 +95,7 @@ export function useSudokuEngine() {
       if (!engine) {
         return Promise.reject(new Error("Engine not initialized"));
       }
+      toast.info("Starting bulk solve...");
       return engine.startBulkSolve(batchSize);
     },
     [engine],
