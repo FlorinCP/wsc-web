@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
 ## Getting Started
 
-First, run the development server:
+First, to run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+    npm install
+```
+
+Then,
+
+```bash
+    npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Alternatively, you can use the [Live Instance](https://wsc-web.vercel.app/) to test the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Important
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If any errors regarding the WASM pop-up (
+such as "WebAssembly Not Loaded - Please Refresh
+WebAssembly solver requires cross-origin isolation. Some features may not work.")
+or the buttons are not working beeing in a disabled state, just refresh the page, I didnt have time to fully fix and check it.
 
-## Learn More
+## Home
 
-To learn more about Next.js, take a look at the following resources:
+Play Sudoku on 3 levels of difficulty: Easy, Medium, and Hard. The game is designed to be user-friendly and visually appealing, with a clean interface and intuitive controls.
+The game board is displayed in a grid format, with numbers and colors indicating the current state of the game. Users can easily input numbers, check their progress, and receive hints when needed.
+The game also includes a timer to track how long it takes to complete the puzzle, adding an element of challenge and competition.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Solve Button - use WASM module to instantly solve the puzzle and display the solution on the board.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## About
+
+How the game uses a WASM module to solve the puzzle. The module is written in C++.
+There is also a npm package that can be used to solve the puzzle, but it is not used in this project. The module is compiled to WebAssembly and loaded into the game using Emscripten.
+I had problems with setting it up to work with Next.js.
+I did it just for fun and to learn something new.
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Batch Solver:
+Upload a txt file with multiple Sudoku puzzles and get the solutions in a txt file.
+Uses the WASM module to solve the puzzles with parallelization.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Learn
+
+Not fully functional -- supposed to be a page with tutorials where they teach you how to solve sudokus based on different strategies.
