@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sudoku Step-by-Step Visualizer (Vanilla JS - Iterative)</title>
+    <style>
+      /* --- Paste the same CSS from the previous HTML example here --- */
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #f0f4f8;
+        padding: 20px;
+        margin: 0;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      #controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 450px;
+      }
+
+      #controls textarea {
+        width: 95%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 14px;
+        resize: vertical;
+        min-height: 60px;
+      }
+
+      #controls .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      #controls .speed-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+      }
+
+      #controls .speed-control input {
+        width: 60px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      #controls button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s ease;
+      }
+
+      #controls button:disabled {
+        background-color: #ccc !important;
+        cursor: not-allowed;
+      }
+
+      #load-btn {
+        background-color: #007bff;
+      }
+
+      #load-btn:hover:not(:disabled) {
+        background-color: #0056b3;
+      }
+
+      #step-btn {
+        background-color: #28a745;
+      }
+
+      #step-btn:hover:not(:disabled) {
+        background-color: #1e7e34;
+      }
+
+      #auto-btn {
+        background-color: #6f42c1;
+      }
+
+      #auto-btn:hover:not(:disabled) {
+        background-color: #5a32a3;
+      }
+
+      #pause-btn {
+        background-color: #ffc107;
+        color: #333;
+      }
+
+      #pause-btn:hover:not(:disabled) {
+        background-color: #e0a800;
+      }
+
+      #reset-btn {
+        background-color: #dc3545;
+      }
+
+      #reset-btn:hover:not(:disabled) {
+        background-color: #b02a37;
+      }
+
+      #message-area {
+        margin: 15px 0;
+        font-style: italic;
+        color: #555;
+        min-height: 1.2em;
+        text-align: center;
+        width: 100%;
+        max-width: 450px;
+      }
+
+      #sudoku-grid {
+        display: grid;
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+        grid-template-rows: repeat(9, minmax(0, 1fr));
+        width: 90vw;
+        max-width: 450px;
+        aspect-ratio: 1 / 1;
+        border: 2px solid black;
+        background-color: white;
+        margin-bottom: 20px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .sudoku-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ddd;
+        font-size: clamp(1rem, 4vw, 1.5rem);
+        font-weight: normal;
+        color: #333;
+        box-sizing: border-box;
+        position: relative;
+      }
+
+      .sudoku-cell.border-right-thick {
+        border-right: 2px solid #555;
+      }
+
+      .sudoku-cell.border-bottom-thick {
+        border-bottom: 2px solid #555;
+      }
+
+      .sudoku-cell.fixed {
+        font-weight: bold;
+        background-color: #e9ecef;
+        color: #495057;
+      }
+
+      .sudoku-cell.active {
+        background-color: #cfe2ff;
+        outline: 2px solid #0d6efd;
+        z-index: 1;
+      }
+
+      .sudoku-cell.removing {
+        background-color: #fecaca;
+        color: #b91c1c;
+        transition: background-color 0.1s ease-out;
+      }
+
+      /* Faster transition */
+    </style>
+  </head>
+  <body>
+    <h1>Sudoku Step-by-Step Visualizer (Iterative Generator)</h1>
+
+    <div id="controls">
+      <textarea
+        id="puzzle-input"
+        rows="3"
+        placeholder="Enter 81-char puzzle string (0 or . for empty)"
+      ></textarea>
+      <div class="button-group">
+        <button id="load-btn">Load Puzzle</button>
+        <button id="step-btn" disabled>Step</button>
+        <button id="auto-btn" disabled>Solve Auto</button>
+        <button id="pause-btn" style="display: none">Pause</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+      <div class="speed-control">
+        <label for="speed-input">Speed (ms):</label>
+        <input
+          type="number"
+          id="speed-input"
+          value="50"
+          min="10"
+          max="2000"
+          step="10"
+        />
+      </div>
+    </div>
+
+    <div id="message-area">Load a puzzle to begin.</div>
+
+    <div id="sudoku-grid">
+      <!-- Cells will be generated by JavaScript -->
+    </div>
+
+    <script>
+      // --- SudokuSolver Class and Helpers ---
+      function popcount(n) {
+        let count = 0;
+        n = n >>> 0;
+        while (n > 0) {
+          n &= n - 1;
+          count++;
+        }
+        return count;
+      }
+
+      function ctz(n, bitWidth = 32) {
+        n = n >>> 0;
+        if (n === 0) return bitWidth;
+        return Math.log2(n & -n);
+      }
+
+      const preCellLookup = [
+        { row: 0, col: 0, box: 0 },
+        { row: 0, col: 1, box: 0 },
+        { row: 0, col: 2, box: 0 },
+        {
+          row: 0,
+          col: 3,
+          box: 1,
+        },
+        { row: 0, col: 4, box: 1 },
+        { row: 0, col: 5, box: 1 },
+        { row: 0, col: 6, box: 2 },
+        { row: 0, col: 7, box: 2 },
+        {
+          row: 0,
+          col: 8,
+          box: 2,
+        },
+        { row: 1, col: 0, box: 0 },
+        { row: 1, col: 1, box: 0 },
+        { row: 1, col: 2, box: 0 },
+        { row: 1, col: 3, box: 1 },
+        {
+          row: 1,
+          col: 4,
+          box: 1,
+        },
+        { row: 1, col: 5, box: 1 },
+        { row: 1, col: 6, box: 2 },
+        { row: 1, col: 7, box: 2 },
+        { row: 1, col: 8, box: 2 },
+        {
+          row: 2,
+          col: 0,
+          box: 0,
+        },
+        { row: 2, col: 1, box: 0 },
+        { row: 2, col: 2, box: 0 },
+        { row: 2, col: 3, box: 1 },
+        { row: 2, col: 4, box: 1 },
+        {
+          row: 2,
+          col: 5,
+          box: 1,
+        },
+        { row: 2, col: 6, box: 2 },
+        { row: 2, col: 7, box: 2 },
+        { row: 2, col: 8, box: 2 },
+        { row: 3, col: 0, box: 3 },
+        {
+          row: 3,
+          col: 1,
+          box: 3,
+        },
+        { row: 3, col: 2, box: 3 },
+        { row: 3, col: 3, box: 4 },
+        { row: 3, col: 4, box: 4 },
+        { row: 3, col: 5, box: 4 },
+        {
+          row: 3,
+          col: 6,
+          box: 5,
+        },
+        { row: 3, col: 7, box: 5 },
+        { row: 3, col: 8, box: 5 },
+        { row: 4, col: 0, box: 3 },
+        { row: 4, col: 1, box: 3 },
+        {
+          row: 4,
+          col: 2,
+          box: 3,
+        },
+        { row: 4, col: 3, box: 4 },
+        { row: 4, col: 4, box: 4 },
+        { row: 4, col: 5, box: 4 },
+        { row: 4, col: 6, box: 5 },
+        {
+          row: 4,
+          col: 7,
+          box: 5,
+        },
+        { row: 4, col: 8, box: 5 },
+        { row: 5, col: 0, box: 3 },
+        { row: 5, col: 1, box: 3 },
+        { row: 5, col: 2, box: 3 },
+        {
+          row: 5,
+          col: 3,
+          box: 4,
+        },
+        { row: 5, col: 4, box: 4 },
+        { row: 5, col: 5, box: 4 },
+        { row: 5, col: 6, box: 5 },
+        { row: 5, col: 7, box: 5 },
+        {
+          row: 5,
+          col: 8,
+          box: 5,
+        },
+        { row: 6, col: 0, box: 6 },
+        { row: 6, col: 1, box: 6 },
+        { row: 6, col: 2, box: 6 },
+        { row: 6, col: 3, box: 7 },
+        {
+          row: 6,
+          col: 4,
+          box: 7,
+        },
+        { row: 6, col: 5, box: 7 },
+        { row: 6, col: 6, box: 8 },
+        { row: 6, col: 7, box: 8 },
+        { row: 6, col: 8, box: 8 },
+        {
+          row: 7,
+          col: 0,
+          box: 6,
+        },
+        { row: 7, col: 1, box: 6 },
+        { row: 7, col: 2, box: 6 },
+        { row: 7, col: 3, box: 7 },
+        { row: 7, col: 4, box: 7 },
+        {
+          row: 7,
+          col: 5,
+          box: 7,
+        },
+        { row: 7, col: 6, box: 8 },
+        { row: 7, col: 7, box: 8 },
+        { row: 7, col: 8, box: 8 },
+        { row: 8, col: 0, box: 6 },
+        {
+          row: 8,
+          col: 1,
+          box: 6,
+        },
+        { row: 8, col: 2, box: 6 },
+        { row: 8, col: 3, box: 7 },
+        { row: 8, col: 4, box: 7 },
+        { row: 8, col: 5, box: 7 },
+        {
+          row: 8,
+          col: 6,
+          box: 8,
+        },
+        { row: 8, col: 7, box: 8 },
+        { row: 8, col: 8, box: 8 },
+      ];
+
+      class SudokuSolver {
+        constructor() {
+          this.rowMasks = new Uint16Array(9);
+          this.columnMasks = new Uint16Array(9);
+          this.boxMasks = new Uint16Array(9);
+          this.puzzleGrid = new Array(81).fill("0");
+          this.emptyCellIndices = new Uint8Array(81);
+          this.positionOfCellInEmptyList = new Uint8Array(81);
+          this.emptyCount = 0;
+        }
+
+        initialize(puzzleData) {
+          if (puzzleData === null || puzzleData.length !== 81) {
+            return false;
+          }
+          this.emptyCount = 0;
+          this.rowMasks.fill(0);
+          this.columnMasks.fill(0);
+          this.boxMasks.fill(0);
+          this.positionOfCellInEmptyList.fill(81);
+          for (let i = 0; i < 81; i++) {
+            const char = puzzleData[i];
+            this.puzzleGrid[i] = char >= "1" && char <= "9" ? char : "0";
+          }
+          let initialValid = true;
+          for (let i = 0; i < 81; ++i) {
+            let num = 0;
+            if (this.puzzleGrid[i] !== "0")
+              num = parseInt(this.puzzleGrid[i], 10);
+            if (num !== 0) {
+              const valueMask = 1 << num;
+              const info = preCellLookup[i];
+              if (
+                this.rowMasks[info.row] & valueMask ||
+                this.columnMasks[info.col] & valueMask ||
+                this.boxMasks[info.box] & valueMask
+              ) {
+                initialValid = false;
+              }
+              this.rowMasks[info.row] |= valueMask;
+              this.columnMasks[info.col] |= valueMask;
+              this.boxMasks[info.box] |= valueMask;
+            } else {
+              if (this.emptyCount < 81) {
+                this.emptyCellIndices[this.emptyCount] = i;
+                this.positionOfCellInEmptyList[i] = this.emptyCount;
+                this.emptyCount++;
+              } else {
+                return false;
+              }
+            }
+          }
+          return initialValid;
+        }
+
+        findMRV() {
+          let minPossibleValuesCount = 10;
+          let bestCellIndex = -1;
+          for (let i = 0; i < this.emptyCount; ++i) {
+            const currentCellIndex = this.emptyCellIndices[i];
+            if (currentCellIndex < 0 || currentCellIndex >= 81) continue;
+            const cellInfo = preCellLookup[currentCellIndex];
+            const usedNumbersMask =
+              this.rowMasks[cellInfo.row] |
+              this.columnMasks[cellInfo.col] |
+              this.boxMasks[cellInfo.box];
+            const possibleNumbersMask = ~usedNumbersMask & 0x3fe;
+            const count = popcount(possibleNumbersMask);
+            if (count === 0) return -1;
+            if (count < minPossibleValuesCount) {
+              minPossibleValuesCount = count;
+              bestCellIndex = currentCellIndex;
+              if (minPossibleValuesCount === 1) break;
+            }
+          }
+          if (bestCellIndex === -1 && this.emptyCount > 0) {
+            for (let i = 0; i < this.emptyCount; ++i) {
+              const currentCellIndex = this.emptyCellIndices[i];
+              if (currentCellIndex < 0 || currentCellIndex >= 81) continue;
+              const cellInfo = preCellLookup[currentCellIndex];
+              const usedNumbersMask =
+                this.rowMasks[cellInfo.row] |
+                this.columnMasks[info.col] |
+                this.boxMasks[info.box];
+              const possibleNumbersMask = ~usedNumbersMask & 0x3fe;
+              if (popcount(possibleNumbersMask) === 0) return -1;
+            }
+            bestCellIndex = this.emptyCellIndices[0];
+          }
+          return bestCellIndex;
+        }
+
+        place(cellIndex, value) {
+          if (cellIndex < 0 || cellIndex >= 81 || value < 1 || value > 9)
+            return;
+          const cellInfo = preCellLookup[cellIndex];
+          const valueMask = 1 << value;
+          this.rowMasks[cellInfo.row] |= valueMask;
+          this.columnMasks[cellInfo.col] |= valueMask;
+          this.boxMasks[cellInfo.box] |= valueMask;
+          this.puzzleGrid[cellIndex] = String(value);
+          if (this.emptyCount > 0) {
+            const pos = this.positionOfCellInEmptyList[cellIndex];
+            if (pos < this.emptyCount && pos >= 0) {
+              const lastCellIdx = this.emptyCellIndices[this.emptyCount - 1];
+              if (cellIndex !== lastCellIdx) {
+                this.emptyCellIndices[pos] = lastCellIdx;
+                this.positionOfCellInEmptyList[lastCellIdx] = pos;
+              }
+              this.positionOfCellInEmptyList[cellIndex] = 81;
+              this.emptyCount--;
+            }
+          }
+        }
+
+        remove(cellIndex, value) {
+          if (cellIndex < 0 || cellIndex >= 81 || value < 1 || value > 9)
+            return;
+          const cellInfo = preCellLookup[cellIndex];
+          const clearMask = ~(1 << value);
+          this.rowMasks[cellInfo.row] &= clearMask;
+          this.columnMasks[cellInfo.col] &= clearMask;
+          this.boxMasks[cellInfo.box] &= clearMask;
+          this.puzzleGrid[cellIndex] = "0";
+          if (
+            this.emptyCount < 81 &&
+            this.positionOfCellInEmptyList[cellIndex] >= 81
+          ) {
+            this.positionOfCellInEmptyList[cellIndex] = this.emptyCount;
+            this.emptyCellIndices[this.emptyCount] = cellIndex;
+            this.emptyCount++;
+          }
+        }
+
+        *solveStepByStep() {
+          yield {
+            action: "INITIAL_STATE",
+            grid: [...this.puzzleGrid],
+            message: "Solver initialized. Starting step-by-step.",
+            isDone: false,
+            emptyCount: this.emptyCount,
+            depth: 0,
+          };
+          const callStack = [];
+          let currentCellIndex = -1;
+          while (true) {
+            const depth = callStack.length;
+            if (currentCellIndex === -1) {
+              if (this.emptyCount === 0) {
+                yield {
+                  action: "SOLVED",
+                  grid: [...this.puzzleGrid],
+                  message: "Puzzle Solved!",
+                  isDone: true,
+                  emptyCount: this.emptyCount,
+                  depth: depth,
+                };
+                return true;
+              }
+              yield {
+                action: "SELECTING_CELL",
+                grid: [...this.puzzleGrid],
+                message: "Selecting next cell using MRV...",
+                isDone: false,
+                emptyCount: this.emptyCount,
+                depth: depth,
+              };
+              currentCellIndex = this.findMRV();
+              if (currentCellIndex === -1) {
+                yield {
+                  action: "UNSOLVABLE_CONTRADICTION",
+                  grid: [...this.puzzleGrid],
+                  message:
+                    "Contradiction: An empty cell has no possible values (from MRV).",
+                  isDone: false,
+                  emptyCount: this.emptyCount,
+                  depth: depth,
+                };
+                if (callStack.length === 0) {
+                  yield {
+                    action: "UNSOLVABLE_EXHAUSTED",
+                    grid: [...this.puzzleGrid],
+                    message:
+                      "Puzzle is unsolvable (MRV contradiction at root).",
+                    isDone: true,
+                    emptyCount: this.emptyCount,
+                    depth: 0,
+                  };
+                  return false;
+                }
+                const lastFrame = callStack[callStack.length - 1];
+                lastFrame.possibleNumbersMask = 0;
+                continue;
+              }
+            }
+            const cellInfo = preCellLookup[currentCellIndex];
+            const usedNumbersMask =
+              this.rowMasks[cellInfo.row] |
+              this.columnMasks[cellInfo.col] |
+              this.boxMasks[cellInfo.box];
+            let possibleNumbersMask = ~usedNumbersMask & 0x3fe;
+            const frameIndex = callStack.findIndex(
+              (f) => f.cellIndex === currentCellIndex,
+            );
+            let currentFrame;
+            if (frameIndex !== -1) {
+              currentFrame = callStack[frameIndex];
+              possibleNumbersMask = currentFrame.possibleNumbersMask;
+            } else {
+              yield {
+                action: "CELL_SELECTED",
+                grid: [...this.puzzleGrid],
+                activeCellIndex: currentCellIndex,
+                possibleNumbersMask: possibleNumbersMask,
+                message: `Selected cell ${currentCellIndex} (R${cellInfo.row}C${cellInfo.col}). Possible mask: ${possibleNumbersMask.toString(2)}`,
+                isDone: false,
+                emptyCount: this.emptyCount,
+                depth: depth,
+              };
+            }
+            if (possibleNumbersMask === 0) {
+              if (frameIndex === -1) {
+                yield {
+                  action: "UNSOLVABLE_CONTRADICTION",
+                  grid: [...this.puzzleGrid],
+                  activeCellIndex: currentCellIndex,
+                  message: `Contradiction: Cell ${currentCellIndex} has no possible values now.`,
+                  isDone: false,
+                  emptyCount: this.emptyCount,
+                  depth: depth,
+                };
+              } else {
+                yield {
+                  action: "NO_MORE_VALUES_FOR_CELL",
+                  grid: [...this.puzzleGrid],
+                  activeCellIndex: currentFrame.cellIndex,
+                  message: `Cell ${currentFrame.cellIndex}: No more values to try. Backtracking.`,
+                  isDone: false,
+                  emptyCount: this.emptyCount,
+                  depth: depth,
+                };
+              }
+              if (callStack.length === 0) {
+                yield {
+                  action: "UNSOLVABLE_EXHAUSTED",
+                  grid: [...this.puzzleGrid],
+                  message: "Puzzle is unsolvable (exhausted possibilities).",
+                  isDone: true,
+                  emptyCount: this.emptyCount,
+                  depth: 0,
+                };
+                return false;
+              }
+              const previousFrame = callStack.pop();
+              yield {
+                action: "BACKTRACKING_START",
+                grid: [...this.puzzleGrid],
+                activeCellIndex: previousFrame.cellIndex,
+                message: `Backtracking from cell ${previousFrame.cellIndex}...`,
+                isDone: false,
+                emptyCount: this.emptyCount,
+                depth: depth,
+              };
+              const valueToRemove = parseInt(
+                this.puzzleGrid[previousFrame.cellIndex],
+              );
+              if (valueToRemove >= 1 && valueToRemove <= 9) {
+                yield {
+                  action: "BACKTRACKING_REMOVING",
+                  grid: [...this.puzzleGrid],
+                  activeCellIndex: previousFrame.cellIndex,
+                  currentValue: valueToRemove,
+                  message: `Removing ${valueToRemove} from cell ${previousFrame.cellIndex}.`,
+                  isDone: false,
+                  emptyCount: this.emptyCount,
+                  depth: depth,
+                };
+                this.remove(previousFrame.cellIndex, valueToRemove);
+              }
+              currentCellIndex =
+                callStack.length > 0
+                  ? callStack[callStack.length - 1].cellIndex
+                  : -1;
+              if (currentCellIndex !== -1)
+                yield {
+                  action: "CONTINUING_PARENT",
+                  grid: [...this.puzzleGrid],
+                  activeCellIndex: currentCellIndex,
+                  message: `Continuing with cell ${currentCellIndex}.`,
+                  isDone: false,
+                  emptyCount: this.emptyCount,
+                  depth: callStack.length,
+                };
+              else currentCellIndex = -1;
+              continue;
+            }
+            const digitToTry = ctz(possibleNumbersMask);
+            if (digitToTry < 1 || digitToTry > 9) {
+              if (currentFrame)
+                currentFrame.possibleNumbersMask &=
+                  currentFrame.possibleNumbersMask - 1;
+              else possibleNumbersMask &= possibleNumbersMask - 1;
+              yield {
+                action: "TRYING_VALUE",
+                message: `Error with ctz (${digitToTry}), skipping.`,
+                grid: [...this.puzzleGrid],
+                activeCellIndex: currentCellIndex,
+                depth: depth,
+                isDone: false,
+              };
+              continue;
+            }
+            const remainingMaskForThisCell =
+              possibleNumbersMask & ~(1 << digitToTry);
+            if (currentFrame) {
+              currentFrame.possibleNumbersMask = remainingMaskForThisCell;
+            }
+            yield {
+              action: "TRYING_VALUE",
+              grid: [...this.puzzleGrid],
+              activeCellIndex: currentCellIndex,
+              currentValue: digitToTry,
+              possibleNumbersMask: possibleNumbersMask,
+              message: `Cell ${currentCellIndex}: Trying value ${digitToTry}.`,
+              isDone: false,
+              emptyCount: this.emptyCount,
+              depth: depth,
+            };
+            this.place(currentCellIndex, digitToTry);
+            yield {
+              action: "PLACED_VALUE",
+              grid: [...this.puzzleGrid],
+              activeCellIndex: currentCellIndex,
+              currentValue: digitToTry,
+              message: `Cell ${currentCellIndex}: Placed ${digitToTry}.`,
+              isDone: false,
+              emptyCount: this.emptyCount,
+              depth: depth,
+            };
+            if (!currentFrame) {
+              callStack.push({
+                cellIndex: currentCellIndex,
+                possibleNumbersMask: remainingMaskForThisCell,
+              });
+            }
+            yield {
+              action: "BRANCH_START",
+              grid: [...this.puzzleGrid],
+              activeCellIndex: currentCellIndex,
+              message: `Exploring branch after placing ${digitToTry}.`,
+              isDone: false,
+              emptyCount: this.emptyCount,
+              depth: depth + 1,
+            };
+            currentCellIndex = -1;
+            continue;
+          }
+        }
+
+        getSolution() {
+          return this.puzzleGrid.join("");
+        }
+
+        getSolutionAsArray() {
+          return [...this.puzzleGrid];
+        }
+      }
+
+      const gridContainer = document.getElementById("sudoku-grid");
+      const puzzleInput = document.getElementById("puzzle-input");
+      const loadBtn = document.getElementById("load-btn");
+      const stepBtn = document.getElementById("step-btn");
+      const autoBtn = document.getElementById("auto-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const speedInput = document.getElementById("speed-input");
+      const messageArea = document.getElementById("message-area");
+
+      let solverInstance = null;
+      let solverGenerator = null;
+      let isAutoSolving = false;
+      let autoSolveTimerId = null;
+      let fixedCellIndices = new Set();
+      let animationSpeed = 50;
+      let isFinished = false;
+      let lastActiveCell = -1;
+
+      puzzleInput.value =
+        "020005789000290005000600300000060000700003090300002070000584000806300200090000007";
+
+      function renderGrid(
+        grid1D,
+        activeCellIndex = -1,
+        removingCellIndex = -1,
+      ) {
+        if (!gridContainer) return;
+        gridContainer.innerHTML = "";
+        lastActiveCell = activeCellIndex;
+
+        for (let i = 0; i < 81; i++) {
+          const cell = document.createElement("div");
+          cell.id = `cell-${i}`;
+          cell.classList.add("sudoku-cell");
+          const value = grid1D[i];
+          cell.textContent = value === "0" ? "" : value;
+          if (fixedCellIndices.has(i)) cell.classList.add("fixed");
+          if (i === activeCellIndex) cell.classList.add("active");
+          if (i === removingCellIndex) {
+            cell.classList.add("removing");
+            setTimeout(() => {
+              const currentCell = document.getElementById(`cell-${i}`);
+              if (currentCell) currentCell.classList.remove("removing");
+            }, animationSpeed * 0.9); // Make removal highlight slightly shorter than step
+          }
+          const row = Math.floor(i / 9);
+          const col = i % 9;
+          if ((col + 1) % 3 === 0 && col !== 8)
+            cell.classList.add("border-right-thick");
+          if ((row + 1) % 3 === 0 && row !== 8)
+            cell.classList.add("border-bottom-thick");
+          gridContainer.appendChild(cell);
+        }
+      }
+
+      function updateMessage(message) {
+        if (messageArea) messageArea.textContent = message;
+      }
+
+      function updateButtonStates() {
+        const loaded = solverInstance !== null;
+        const running = solverGenerator !== null;
+        isFinished =
+          (!running && loaded && solverInstance.emptyCount === 0) ||
+          messageArea.textContent.includes("Unsolvable"); // Approximation of finished state
+
+        stepBtn.disabled = isAutoSolving || isFinished || !loaded;
+        autoBtn.disabled = isAutoSolving || isFinished || !loaded;
+        pauseBtn.style.display = isAutoSolving ? "inline-block" : "none";
+        autoBtn.style.display = isAutoSolving ? "none" : "inline-block";
+        resetBtn.disabled = isAutoSolving;
+        loadBtn.disabled = isAutoSolving;
+        speedInput.disabled = isAutoSolving;
+      }
+
+      // --- Event Handlers ---
+      function handleLoad() {
+        handleReset();
+        const puzzleStr = puzzleInput.value.replace(/[\s.]/g, "0"); // Replace dots and spaces with 0
+        if (puzzleStr.length !== 81) {
+          updateMessage("Error: Puzzle string must be 81 characters long.");
+          return;
+        }
+
+        const newSolver = new SudokuSolver();
+        if (newSolver.initialize(puzzleStr)) {
+          solverInstance = newSolver;
+          fixedCellIndices.clear();
+          const initialGrid = solverInstance.getSolutionAsArray();
+          initialGrid.forEach((val, index) => {
+            if (val !== "0") fixedCellIndices.add(index);
+          });
+          isFinished = false;
+          renderGrid(initialGrid);
+          updateMessage("Puzzle loaded. Click Step or Solve Auto.");
+        } else {
+          solverInstance = null;
+          renderGrid(new Array(81).fill("0"));
+          updateMessage("Error: Invalid initial puzzle (conflicts found).");
+        }
+        updateButtonStates();
+      }
+
+      function handleStep() {
+        if (!solverInstance || isFinished) return;
+
+        if (!solverGenerator) {
+          solverGenerator = solverInstance.solveStepByStep();
+        }
+
+        const result = solverGenerator.next();
+
+        if (result.value) {
+          const stepData = result.value;
+          let removingIndex = -1;
+          // Use lastActiveCell for highlighting during removal if current active is different
+          if (stepData.action === "BACKTRACKING_REMOVING") {
+            removingIndex = stepData.activeCellIndex ?? -1; // The cell value is being removed FROM
+          }
+
+          renderGrid(stepData.grid, stepData.activeCellIndex, removingIndex);
+          updateMessage(`[Depth: ${stepData.depth}] ${stepData.message}`);
+          isFinished = stepData.isDone;
+
+          if (isFinished) {
+            solverGenerator = null; // Clean up generator
+            // Ensure final state is rendered without active cell highlight
+            if (
+              stepData.action === "SOLVED" ||
+              stepData.action.startsWith("UNSOLVABLE")
+            ) {
+              renderGrid(stepData.grid);
+            }
+          }
+        } else if (result.done) {
+          isFinished = true;
+          solverGenerator = null;
+          // Final render based on solver state if generator finishes without explicit DONE yield
+          if (solverInstance) {
+            renderGrid(solverInstance.getSolutionAsArray());
+            updateMessage(
+              solverInstance.emptyCount === 0
+                ? "Finished: Solved."
+                : "Finished: Unsolvable.",
+            );
+          } else {
+            updateMessage("Finished."); // Fallback
+          }
+        }
+        updateButtonStates();
+      }
+
+      function handleAuto() {
+        if (!solverInstance || isFinished || isAutoSolving) return;
+        isAutoSolving = true;
+        updateButtonStates();
+        updateMessage("Auto-solving...");
+
+        function autoStep() {
+          if (!isAutoSolving) return; // Stop if paused
+          handleStep();
+          if (isFinished) {
+            // Check if step finished it
+            isAutoSolving = false;
+            updateButtonStates();
+          } else {
+            autoSolveTimerId = setTimeout(autoStep, animationSpeed);
+          }
+        }
+
+        autoStep(); // Start the loop
+      }
+
+      function handlePause() {
+        isAutoSolving = false;
+        clearTimeout(autoSolveTimerId);
+        autoSolveTimerId = null;
+        updateMessage("Paused.");
+        updateButtonStates();
+      }
+
+      function handleReset() {
+        isAutoSolving = false;
+        isFinished = false;
+        clearTimeout(autoSolveTimerId);
+        autoSolveTimerId = null;
+        solverInstance = null;
+        solverGenerator = null;
+        fixedCellIndices.clear();
+        renderGrid(new Array(81).fill("0"));
+        updateMessage("Load a puzzle to begin.");
+        puzzleInput.value =
+          "020005789000290005000600300000060000700003090300002070000584000806300200090000007";
+        updateButtonStates();
+      }
+
+      function handleSpeedChange() {
+        animationSpeed = parseInt(speedInput.value, 10) || 100;
+        if (animationSpeed < 10) animationSpeed = 10;
+      }
+
+      loadBtn.addEventListener("click", handleLoad);
+      stepBtn.addEventListener("click", handleStep);
+      autoBtn.addEventListener("click", handleAuto);
+      pauseBtn.addEventListener("click", handlePause);
+      resetBtn.addEventListener("click", handleReset);
+      speedInput.addEventListener("change", handleSpeedChange);
+      speedInput.addEventListener("input", handleSpeedChange);
+
+      renderGrid(new Array(81).fill("0"));
+      updateButtonStates();
+      updateMessage("Load a puzzle using the default or paste your own.");
+    </script>
+  </body>
+</html>
